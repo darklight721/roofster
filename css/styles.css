@@ -1,0 +1,47 @@
+body {
+    padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+}
+
+h3 {
+	display: inline-block;
+}
+
+#container, .map-tile {
+	height: 600px;
+}
+
+.map-div, .side-div {
+	
+	height: 100%;
+}
+
+.map-tile {
+	width: 100%;
+}
+
+.side-div {
+
+}
+
+.label {
+	margin-left: 10px;
+}
+
+.label-info {
+	border-bottom-right-radius: 0;
+	border-bottom-left-radius: 0; 
+}
+
+.error1 {
+
+	border-color: red;
+	background-color: red;
+}
+
+.btn-group .btn {
+	margin-bottom: 9px;
+}
+
+.control-group {
+	margin-bottom: 0px;
+}
