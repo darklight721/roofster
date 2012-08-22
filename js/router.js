@@ -32,7 +32,7 @@ define(function(require){
 			$('#container').html(this.homeView.el);
 			this.isHomeView = true;
 
-			this.homeView.setView("list");
+			this.homeView.setSideView("list");
 		},
 
 		about : function() {
@@ -71,7 +71,7 @@ define(function(require){
 				this.home();
 			}
 
-			this.homeView.setView("new");
+			this.homeView.setSideView("new");
 		}
 	});
 

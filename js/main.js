@@ -41,6 +41,13 @@ require(['$', 'Backbone', 'Router'], function($, Backbone, Router){
 	Backbone.View.prototype.assign = function(view, selector) {
 		view.setElement(this.$(selector)).render();
 	};
+	
+	Backbone.View.prototype.empty = function(view) {
+		if (view)
+		{
+			view.$el.empty();
+		}
+	};
 
 	$(function(){
 		new Router();

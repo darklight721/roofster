@@ -6,9 +6,7 @@ define(function(require){
 	return Backbone.View.extend({
 
 		initialize : function() {
-
 			this.render();
-
 		},
 
 		render : function() {
@@ -30,7 +28,7 @@ define(function(require){
 
 			var attr = {};
 			attr[evt.target.id] = $.trim(evt.target.value);
-			this.model.set(attr);
+			this.model.set(attr, { silent : true });
 
 			var result = this.model.validateAttr(attr);
 			if (result)
@@ -42,13 +40,21 @@ define(function(require){
 				this.$(evt.target.parentElement).addClass('error');
 			}
 		},
+		
+		modelChanged : function() {
+			console.log('roof attr changed');
+			if (this.model.hasChanged('address'))
+			{
+				this.$('#address').val(this.model.get('address'));
+			}
+		},
 
 		setType : function(evt) {
 			this.$('.type').removeClass('active');
 			this.$(evt.target).addClass('active');
 			this.model.set({
 				type : this.$(evt.target).data('type')
-			});
+			}, { silent : true });
 		},
 
 		saveRoof : function() {
@@ -66,6 +72,11 @@ define(function(require){
 		            }
 		        });
 	    	}
+		},
+		
+		setModel : function(model) {
+			this.model = model;
+			this.model.bind('change', this.modelChanged, this);
 		}
 	});
 });

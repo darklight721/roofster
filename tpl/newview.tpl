@@ -12,9 +12,9 @@
 		</div>
 	</div>
 	<div class="control-group">
-		<span class="label label-important">Drop a pin</span>
+		<span class="label label-important">Pin to map</span>
 		<br/>
-		<div style="margin-bottom:9px;">Double click the location of your roof on the map.</div>
+		<div style="margin-bottom:9px;">Click the location of your roof on the map.</div>
 	</div>
 	<div class="control-group">
 		<span class="label label-info">Address</span>
@@ -53,4 +53,3 @@
 	</div>
 	<button id="save" class="btn btn-primary span3" type="button" style="margin-left:0;">Save</button>
 </form>
-

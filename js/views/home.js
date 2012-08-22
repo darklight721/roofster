@@ -12,35 +12,44 @@ define(function(require){
 		className: 'row',
 
 		initialize : function() {
-
+			console.log('home initialize');
 			this.mapView = new MapView();
-			this.listView = new ListView();
-			this.newView = new NewView({
-				model : new Roof()
-			});
-
 			this.render();
-
 		},
 
 		render : function() {
-
 			this.$el.html(
 				Templates.renderHomeView()
 			);
-
-			
 			this.assign(this.mapView, '.map-div');
-			//this.assign(this.listView, '.side-div');
-
 			return this;
 		},
 
-		setView : function(view) {
+		setSideView : function(view) {
 			switch (view)
 			{
-				case "list" : this.assign(this.listView, '.side-div'); break;
-				case "new" : this.assign(this.newView, '.side-div'); break;
+				case "list" :
+					if (!this.listView)
+					{
+						this.listView = new ListView();
+					}
+					this.assign(this.listView, '.side-div');
+					
+					this.mapView.prepareFor('list');
+					break;
+				case "new" :
+					var roof = new Roof();
+					
+					if (!this.newView)
+					{
+						this.newView = new NewView();
+					}
+					this.newView.setModel(roof);
+					this.assign(this.newView, '.side-div');
+					
+					this.mapView.setModel(roof);
+					this.mapView.prepareFor('new');
+					break;
 			}
 		}
 
