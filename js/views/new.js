@@ -3,6 +3,8 @@ define(function(require){
 	var   Backbone = require('Backbone')
 		, Templates = require('Templates');
 
+	require('Bootstrap');
+
 	return Backbone.View.extend({
 
 		initialize : function() {
@@ -30,14 +32,14 @@ define(function(require){
 			attr[evt.target.id] = $.trim(evt.target.value);
 			this.model.set(attr, { silent : true });
 
-			var result = this.model.validateAttr(attr);
-			if (result)
+			var error = this.model.validateAttr(attr);
+			if (error[evt.target.id])
 			{
-				this.$(evt.target.parentElement).removeClass('error');
+				this.showError(evt.target.id, error[evt.target.id]);
 			}
 			else
 			{
-				this.$(evt.target.parentElement).addClass('error');
+				this.removeError(evt.target.id);
 			}
 		},
 		
@@ -46,6 +48,11 @@ define(function(require){
 			if (this.model.hasChanged('address'))
 			{
 				this.$('#address').val(this.model.get('address'));
+				this.removeError('address');
+			}
+			else if (this.model.hasChanged('latitude'))
+			{
+				this.removeError('latitude');
 			}
 		},
 
@@ -60,8 +67,17 @@ define(function(require){
 		saveRoof : function() {
 			console.log('save roof');
 			
-			var result = this.model.validateAttr(this.model.attributes);
-			if (result)
+			var errorFree = true;
+			var error = this.model.validateAttr(this.model.attributes);
+			_.each(error, function(value, key){
+				if (value)
+				{
+					errorFree = false;
+					this.showError(key, value);
+				}
+			}, this);
+
+			if (errorFree)
 			{
 		        this.model.save(null, {
 		            success: function (model) {
@@ -72,6 +88,20 @@ define(function(require){
 		            }
 		        });
 	    	}
+		},
+
+		showError : function(elemId, errorMsg) {
+			var el = this.$('#' + elemId);
+			el.parent().addClass('error');
+			el.tooltip({
+				title : errorMsg
+			});
+		},
+
+		removeError : function(elemId) {
+			var el = this.$('#' + elemId);
+			el.parent().removeClass('error');
+			el.tooltip('destroy');
 		},
 		
 		setModel : function(model) {

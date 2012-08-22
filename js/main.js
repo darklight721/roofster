@@ -8,6 +8,7 @@ require.config({
 		, Backbone		: 'ext/backbone-min'
 		, Handlebars	: 'ext/handlebars-1.0.0.beta.6'
 		, text			: 'ext/text'
+		, Bootstrap		: 'ext/bootstrap.min'
 		// models
 		, Roof			: 'models/roof'
 		, Roofs			: 'collections/roofs'
@@ -25,7 +26,10 @@ require.config({
 	shim : {
 		'$': {
             exports: '$'
-        }, 
+        },
+        'Bootstrap' : [
+        	'$'
+        ],
 		'Backbone' : {
 			deps : ['_', '$'],
 			exports : 'Backbone'

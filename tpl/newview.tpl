@@ -14,7 +14,7 @@
 	<div class="control-group">
 		<span class="label label-important">Pin to map</span>
 		<br/>
-		<div style="margin-bottom:9px;">Click the location of your roof on the map.</div>
+		<label id="latitude" class="control-label">Click the location of your roof on the map.</label>
 	</div>
 	<div class="control-group">
 		<span class="label label-info">Address</span>
@@ -39,7 +39,7 @@
 	<div class="control-group">
 		<span class="label label-info">Details</span>
 		<br/>
-		<textarea id="details" class="span3"></textarea>
+		<textarea id="details" class="span3" rows="4"></textarea>
 	</div>
 	<div class="control-group">
 		<span class="label label-info">Email</span>

@@ -108,7 +108,7 @@ define(['Backbone','Templates'], function(Backbone, Templates){
 				this.model.set({
 					latitude : latLng.lat(),
 					longitude : latLng.lng()
-				}, {silent : true});
+				});
 				
 				var self = this;
 				this.getAddress(latLng, function(address){
