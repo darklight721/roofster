@@ -10,6 +10,7 @@ $app->get('/roofs/search/:query', 'findByAddress');
 $app->post('/roofs', 'addRoof');
 $app->put('/roofs/:id', 'updateRoof');
 $app->delete('/roofs/:id/:email/:passcode', 'deleteRoof');
+$app->post('/upload/:id', 'uploadPictures');
 
 $app->run();
 
@@ -115,6 +116,40 @@ function deleteRoof($id, $email, $passcode) {
 
 function findByName($query) {
 
+}
+
+function uploadPictures($id) {
+	$ret = "error";
+	if (isset($id) && isset($_FILES["pictures"])) {
+		$path = "../pics/$id";
+		if (mkdir($path)) {
+			$path .= "/";
+			$paths = [];
+			
+			foreach($_FILES["pictures"]["error"] as $key => $error) {
+				$tmp_name = $_FILES["pictures"]["tmp_name"][$key];
+				$name = $_FILES["pictures"]["name"][$key];
+				move_uploaded_file($tmp_name, $path . $name);
+				$paths[$key] = "pics/$id" . $name;
+			}
+			
+			// update pictures field in roof table
+			$sql = "UPDATE roof SET pictures=:pictures WHERE id=:id";
+			$pictureLinks = json_encode($paths);
+			try {
+				$db = getConnection();
+				$stmt = $db->prepare($sql);
+				$stmt->bindParam("pictures", $pictureLinks);
+				$stmt->bindParam("id", $id);
+				$stmt->execute();
+				$db = null;
+				$ret = "success";
+			} catch(PDOException $e) {
+				echo '{"error":{"text":'. $e->getMessage() .'}}';
+			}
+		}
+	}
+	echo $ret;
 }
 
 function getConnection() {

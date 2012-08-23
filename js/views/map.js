@@ -4,24 +4,28 @@ define(['Backbone','Templates'], function(Backbone, Templates){
 
 		initialize : function() {	
 			this.mapOptions = {
-	         	center: new google.maps.LatLng(10.3098, 123.893), // default cebu city
-	        	zoom: 15,
-	         	mapTypeId: google.maps.MapTypeId.ROADMAP,
-	         	mapTypeControl: true,
-			    mapTypeControlOptions: {
-			      style: google.maps.MapTypeControlStyle.DROPDOWN_MENU
-			    },
-			    zoomControl: true,
-			    zoomControlOptions: {
-			      style: google.maps.ZoomControlStyle.SMALL
-			    },
-			    panControl: false,
-			    streetViewControl: false
+	         	  center : new google.maps.LatLng(10.3098, 123.893) // default cebu city
+	        	, zoom : 16
+	         	, mapTypeId : google.maps.MapTypeId.ROADMAP
+	         	, mapTypeControl : true
+			    , mapTypeControlOptions : {
+					style : google.maps.MapTypeControlStyle.DROPDOWN_MENU
+				  }
+			    , zoomControl : true
+			    , zoomControlOptions : {
+					style : google.maps.ZoomControlStyle.SMALL
+			      }
+			    , panControl : false
+			    , streetViewControl : false
 	        };
 			
+			this.geocoder = new google.maps.Geocoder();
 			this.markers = [];
 			this.currentLoc = null;
-			this.geocoder = new google.maps.Geocoder();
+		},
+		
+		setModel : function(model) {
+			this.model = model;
 		},
 
 		render : function() {
@@ -29,10 +33,20 @@ define(['Backbone','Templates'], function(Backbone, Templates){
 				Templates.renderMapView()
 			);
 			
+			this.setSize();
 			this.setMap();
 			this.centerCurrentLocation();
 
 			return this;
+		},
+		
+		setSize : function() {
+			var height = $(window).innerHeight() - 80;
+			if (height < 600) 
+				height = 600;
+			else if (height > 1000)
+				height = 1000;
+			this.$('.map-tile').height(height);
 		},
 
 		setMap : function() {
@@ -132,10 +146,6 @@ define(['Backbone','Templates'], function(Backbone, Templates){
 					}
 				}
 			);
-		},
-		
-		setModel : function(model) {
-			this.model = model;
 		}
 	});
 });
