@@ -34,8 +34,7 @@ define(function(require){
 				case "list" :
 					var roofs = new Roofs();
 					
-					this.mapView.setModel(roofs);
-					this.mapView.prepareFor('list');
+					this.mapView.prepareFor('list', roofs);
 					
 					if (!this.listView)
 					{
@@ -54,8 +53,7 @@ define(function(require){
 					this.newView.setModel(roof);
 					this.assign(this.newView, '.side-div');
 					
-					this.mapView.setModel(roof);
-					this.mapView.prepareFor('new');
+					this.mapView.prepareFor('new', roof);
 					break;
 				case "details" :
 					if (!id) return;
@@ -74,7 +72,9 @@ define(function(require){
 							template : Templates.renderDetailsView(),
 							data : roof.toJSON()
 						}), '.side-div');
-						console.log(roof.toJSON());
+						//console.log(roof.toJSON());
+
+						self.mapView.prepareFor('details', roof);
 					}});
 					
 					break;

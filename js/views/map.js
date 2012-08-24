@@ -25,10 +25,6 @@ define(['Backbone','Templates'], function(Backbone, Templates){
 			this.markers = [];
 			this.currentLoc = null;
 		},
-		
-		setModel : function(model) {
-			this.model = model;
-		},
 
 		render : function() {
 			this.$el.html(
@@ -75,15 +71,17 @@ define(['Backbone','Templates'], function(Backbone, Templates){
 			}
 		},
 		
-		prepareFor : function(view) {	
+		prepareFor : function(view, model) {	
 			var self = this;
 			switch (view)
 			{
 				case "list" :
+					this.model = model;
 					this.clearMap();
 					this.fetchRoofs();
 					break;
 				case "new" :
+					this.model = model;
 					this.clearMap();
 					google.maps.event.addListener(this.map, 'click', function(evt){
 						if (self.markers.length > 0)
@@ -96,6 +94,19 @@ define(['Backbone','Templates'], function(Backbone, Templates){
 						}
 						self.updateRoof(evt.latLng);
 					});
+					break;
+				case "details" :
+					if (this.model && this.model.models) // check if model is a collection
+					{
+						var roofs = this.model.where({
+							id : model.get('id')
+						});
+
+						if (roofs.length > 0)
+						{
+							
+						}
+					}
 					break;
 			}
 		},

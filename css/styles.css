@@ -2,17 +2,44 @@ body {
     padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
 }
 
-h3 {
-	display: inline-block;
-}
-
 .map-tile {
 	width: 100%;
 	height: 600px;
 }
 
-.details .label {
-	margin-top: 10px;
+.new, .details h3 {
+	display: inline-block;
+}
+
+.new .label, .details .label {
+	margin-left: 10px;
+}
+
+.new .label-info, .details .label {
+	border-bottom-right-radius: 0;
+	border-bottom-left-radius: 0; 
+}
+
+.new .btn.span3, .details .btn.span3 {
+	margin-left: 0;
+}
+
+.new .btn-group .btn {
+	margin-bottom: 9px;
+}
+
+.new form .control-group {
+	margin-bottom: 0px;
+}
+
+.new form legend {
+	font-size: 12px;
+	line-height: 16px;
+	margin-bottom: 9px;
+}
+
+.new form legend + .control-group {
+	margin-top: 0px;
 }
 
 .details div.span3 {
@@ -26,36 +53,13 @@ h3 {
 	width: 100%;
 }
 
-.label {
-	margin-left: 10px;
+.details li {
+	margin-bottom: 10px;
 }
 
-.label-info, .details .label {
-	border-bottom-right-radius: 0;
-	border-bottom-left-radius: 0; 
+.details strong {
+	text-transform: capitalize;
 }
 
-.error1 {
 
-	border-color: red;
-	background-color: red;
-}
 
-.btn-group .btn {
-	margin-bottom: 9px;
-}
-
-.control-group {
-	margin-bottom: 0px;
-}
-
-form legend {
-	font-size: 12px;
-	line-height: 16px;
-	margin-bottom: 9px;
-}
-
-legend + .control-group
-{
-	margin-top: 0px;
-}

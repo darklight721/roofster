@@ -49,5 +49,5 @@
 	</div>
 	{{/if}}
 	
-	<button class="btn span3" type="button" style="margin-left:0;"><i class="icon-edit"></i> Edit</button>
+	<button class="btn span3" type="button"><i class="icon-edit"></i> Edit</button>
 </div>
