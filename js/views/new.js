@@ -7,6 +7,7 @@ define(function(require){
 	return Backbone.View.extend({
 
 		initialize : function() {
+			this.template = Templates.renderNewView();
 			this.render();
 		},
 		
@@ -17,7 +18,7 @@ define(function(require){
 
 		render : function() {
 			this.$el.html(
-				Templates.renderNewView()
+				this.template()
 			);
 			
 			// set tooltip for pictures
@@ -88,7 +89,7 @@ define(function(require){
 			console.log('save roof');
 			
 			var errorFree = true;
-			var error = this.model.validateAttr(this.model.attributes);
+			var error = this.model.validateAttr(this.model.toJSON());
 			_.each(error, function(value, key){
 				if (value)
 				{

@@ -4,7 +4,7 @@
 </div>
 <form style="margin-top:15px;">
 	<div class="control-group">
-		<span class="label label-info">Type</span>
+		<span class="label label-info">For Rent</span>
 		<div class="btn-group" data-toggle="buttons-radio">
 			<button type="button" class="btn active type" data-type="room">Room</button>
 			<button type="button" class="btn type" data-type="apartment">Apartment</button>

@@ -14,6 +14,7 @@ define(function(require){
 			, "about"			: "about"
 			, "contact"			: "contact"
 			, "roofs/new"		: "newRoof"
+			, "roofs/:id"		: "detailsRoof"
 		},
 
 		initialize : function() {
@@ -23,15 +24,7 @@ define(function(require){
 
 		home : function() {
 			console.log("home");
-			this.headerView.selectMenuItem('home-menu');
-
-			if (!this.homeView)
-			{
-				this.homeView = new HomeView();
-			}
-			$('#container').html(this.homeView.el);
-			this.isHomeView = true;
-
+			this.showHome();
 			this.homeView.setSideView("list");
 		},
 
@@ -42,7 +35,7 @@ define(function(require){
 			if (!this.aboutView)
 			{
 				this.aboutView = new GenericView({
-					template : Templates.renderAboutView
+					template : Templates.renderAboutView()
 				});
 			}
 			$('#container').html(this.aboutView.el);
@@ -56,7 +49,7 @@ define(function(require){
 			if (!this.contactView)
 			{
 				this.contactView = new GenericView({
-					template : Templates.renderContactView
+					template : Templates.renderContactView()
 				});
 			}
 			$('#container').html(this.contactView.el);
@@ -65,13 +58,31 @@ define(function(require){
 
 		newRoof : function() {
 			console.log("new roof");
-
 			if (!this.isHomeView)
 			{
-				this.home();
+				this.showHome();
 			}
-
 			this.homeView.setSideView("new");
+		},
+		
+		detailsRoof : function(id) {
+			console.log("details roof");
+			if (!this.isHomeView)
+			{
+				this.showHome();
+			}
+			this.homeView.setSideView("details", id);
+		},
+		
+		showHome : function() {
+			this.headerView.selectMenuItem('home-menu');
+			
+			if (!this.homeView)
+			{
+				this.homeView = new HomeView();
+			}
+			$('#container').html(this.homeView.el);
+			this.isHomeView = true;
 		}
 	});
 

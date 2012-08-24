@@ -5,8 +5,9 @@ require 'Slim/Slim.php';
 $app = new Slim();
 
 $app->get('/roofs', 'getRoofs');
-$app->get('/roofs/:id', 'getWine');
+$app->get('/roofs/:id', 'getRoof');
 $app->get('/roofs/search/:query', 'findByAddress');
+$app->get('/roofs/search/:lat/:lng/:radius', 'findByLatLng');
 $app->post('/roofs', 'addRoof');
 $app->put('/roofs/:id', 'updateRoof');
 $app->delete('/roofs/:id/:email/:passcode', 'deleteRoof');
@@ -15,7 +16,7 @@ $app->post('/upload/:id', 'uploadPictures');
 $app->run();
 
 function getRoofs() {
-    $sql = "SELECT * FROM roof ORDER BY date_added";
+    $sql = "SELECT id, type, address, rate, latitude, longitude, contact_person, contact_number, details, pictures, date_added FROM roof ORDER BY date_added";
     try {
         $db = getConnection();
         $stmt = $db->query($sql);
@@ -28,7 +29,7 @@ function getRoofs() {
 }
 
 function getRoof($id) {
-    $sql = "SELECT * FROM roof WHERE id=:id";
+    $sql = "SELECT id, type, address, rate, latitude, longitude, contact_person, contact_number, details, pictures, date_added FROM roof WHERE id=:id";
     try {
         $db = getConnection();
         $stmt = $db->prepare($sql);
@@ -38,6 +39,28 @@ function getRoof($id) {
         $db = null;
         echo json_encode($roof);
     } catch(PDOException $e) {
+        echo '{"error":{"text":'. $e->getMessage() .'}}'; 
+    }
+}
+
+function findByLatLng($lat, $lng, $radius) {
+	$sql = "SELECT id, type, address, rate, latitude, longitude, date_added FROM roof where latitude BETWEEN :lat_min AND :lat_max AND longitude BETWEEN :lng_min AND :lng_max ORDER BY date_added";
+	$lat_min = $lat - $radius;
+	$lat_max = $lat + $radius;
+	$lng_min = $lng - $radius;
+	$lng_max = $lng + $radius;
+	try {
+		$db = getConnection();
+		$stmt = $db->prepare($sql);
+		$stmt->bindParam("lat_min", $lat_min);
+		$stmt->bindParam("lat_max", $lat_max);
+		$stmt->bindParam("lng_min", $lng_min);
+		$stmt->bindParam("lng_max", $lng_max);
+		$stmt->execute();
+		$roofs = $stmt->fetchAll(PDO::FETCH_OBJ);
+		$db = null;
+		echo json_encode($roofs);
+	} catch(PDOException $e) {
         echo '{"error":{"text":'. $e->getMessage() .'}}'; 
     }
 }
@@ -114,15 +137,15 @@ function deleteRoof($id, $email, $passcode) {
     }
 }
 
-function findByName($query) {
-
+function findByAddress($query) {
+	echo $query;
 }
 
 function uploadPictures($id) {
 	$ret = "error";
 	if (isset($id) && isset($_FILES["pictures"])) {
 		$path = "../pics/$id";
-		if (mkdir($path)) {
+		if (mkdir($path, 0777, true)) {
 			$path .= "/";
 			$paths = [];
 			
@@ -130,12 +153,12 @@ function uploadPictures($id) {
 				$tmp_name = $_FILES["pictures"]["tmp_name"][$key];
 				$name = $_FILES["pictures"]["name"][$key];
 				move_uploaded_file($tmp_name, $path . $name);
-				$paths[$key] = "pics/$id" . $name;
+				$paths[$key] = "pics/$id/" . $name;
 			}
 			
 			// update pictures field in roof table
 			$sql = "UPDATE roof SET pictures=:pictures WHERE id=:id";
-			$pictureLinks = json_encode($paths);
+			$pictureLinks = json_encode($paths, JSON_UNESCAPED_SLASHES);
 			try {
 				$db = getConnection();
 				$stmt = $db->prepare($sql);

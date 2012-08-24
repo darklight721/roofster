@@ -3,6 +3,8 @@ define(['Backbone','Templates'], function(Backbone, Templates){
 	return Backbone.View.extend({
 
 		initialize : function() {	
+			this.template = Templates.renderMapView();
+			
 			this.mapOptions = {
 	         	  center : new google.maps.LatLng(10.3098, 123.893) // default cebu city
 	        	, zoom : 16
@@ -30,7 +32,7 @@ define(['Backbone','Templates'], function(Backbone, Templates){
 
 		render : function() {
 			this.$el.html(
-				Templates.renderMapView()
+				this.template()
 			);
 			
 			this.setSize();
@@ -79,6 +81,7 @@ define(['Backbone','Templates'], function(Backbone, Templates){
 			{
 				case "list" :
 					this.clearMap();
+					this.fetchRoofs();
 					break;
 				case "new" :
 					this.clearMap();
@@ -91,7 +94,7 @@ define(['Backbone','Templates'], function(Backbone, Templates){
 						{
 							self.placeMarker(evt.latLng);
 						}
-						self.updateModel(evt.latLng);
+						self.updateRoof(evt.latLng);
 					});
 					break;
 			}
@@ -115,7 +118,7 @@ define(['Backbone','Templates'], function(Backbone, Templates){
 			this.markers.push(marker);
 		},
 		
-		updateModel : function(latLng) {
+		updateRoof : function(latLng) {
 			// save to model
 			if (this.model)
 			{
@@ -146,6 +149,32 @@ define(['Backbone','Templates'], function(Backbone, Templates){
 					}
 				}
 			);
+		},
+		
+		fetchRoofs : function() {
+			if (!this.model)
+				return;
+				
+			var self = this,
+				centerLoc = this.map.getCenter();
+			
+			this.model.fetch({
+				  url : self.model.url + '/search/' + centerLoc.lat() + '/' + centerLoc.lng() + '/' + '0.01'
+				, success : function(){
+					console.log('fetch collection success');
+					self.placeMarkers();
+				}
+			});
+		},
+		
+		placeMarkers : function() {
+			_.each(this.model.models, function(roof){
+				this.placeMarker(new google.maps.LatLng(
+					roof.get('latitude'),
+					roof.get('longitude')
+				));
+				_.last(this.markers).setTitle(roof.get('type'));
+			}, this);
 		}
 	});
 });

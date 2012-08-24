@@ -11,11 +11,26 @@ h3 {
 	height: 600px;
 }
 
+.details .label {
+	margin-top: 10px;
+}
+
+.details div.span3 {
+	margin-top: 10px;
+	margin-left: 0px;
+}
+
+.details div .well {
+	margin-left: 0px;
+	margin-bottom: 0px;
+	width: 100%;
+}
+
 .label {
 	margin-left: 10px;
 }
 
-.label-info {
+.label-info, .details .label {
 	border-bottom-right-radius: 0;
 	border-bottom-left-radius: 0; 
 }

@@ -3,12 +3,13 @@ define(['Backbone','Templates'], function(Backbone, Templates){
 	return Backbone.View.extend({
 
 		initialize : function() {
+			this.template = Templates.renderHeaderView();
 			this.render();
 		},
 
 		render : function() {
 			this.$el.html(
-				Templates.renderHeaderView()
+				this.template()
 			);
 			return this;
 		},

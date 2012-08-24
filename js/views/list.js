@@ -6,14 +6,13 @@ define(function(require){
 	return Backbone.View.extend({
 
 		initialize : function() {
-
+			this.template = Templates.renderListView();
 			this.render();
-
 		},
 
 		render : function() {
 			this.$el.html(
-				Templates.renderListView()
+				this.template()
 			);
 
 			return this;

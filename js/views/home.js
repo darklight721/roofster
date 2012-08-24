@@ -2,10 +2,12 @@
 define(function(require){
 	var   Backbone = require('Backbone')
 		, Roof = require('Roof')
+		, Roofs = require('Roofs')
 		, Templates = require('Templates')
 		, MapView = require('MapView')
 		, ListView = require('ListView')
-		, NewView = require('NewView');
+		, NewView = require('NewView')
+		, GenericView = require('GenericView');
 
 	return Backbone.View.extend({
 
@@ -13,29 +15,34 @@ define(function(require){
 
 		initialize : function() {
 			console.log('home initialize');
+			this.template = Templates.renderHomeView();
 			this.mapView = new MapView();
 			this.render();
 		},
 
 		render : function() {
 			this.$el.html(
-				Templates.renderHomeView()
+				this.template()
 			);
 			this.assign(this.mapView, '.map-div');
 			return this;
 		},
 
-		setSideView : function(view) {
+		setSideView : function(view, id) {
 			switch (view)
 			{
 				case "list" :
+					var roofs = new Roofs();
+					
+					this.mapView.setModel(roofs);
+					this.mapView.prepareFor('list');
+					
 					if (!this.listView)
 					{
 						this.listView = new ListView();
 					}
 					this.assign(this.listView, '.side-div');
 					
-					this.mapView.prepareFor('list');
 					break;
 				case "new" :
 					var roof = new Roof();
@@ -49,6 +56,27 @@ define(function(require){
 					
 					this.mapView.setModel(roof);
 					this.mapView.prepareFor('new');
+					break;
+				case "details" :
+					if (!id) return;
+					
+					var roof = new Roof({ id : id }),
+						self = this;
+						
+					roof.fetch({ success : function(){
+					
+						// decode json values in pictures attribute
+						roof.set({
+							pictures : JSON.parse(roof.get('pictures'))
+						});
+					
+						self.assign(new GenericView({
+							template : Templates.renderDetailsView(),
+							data : roof.toJSON()
+						}), '.side-div');
+						console.log(roof.toJSON());
+					}});
+					
 					break;
 			}
 		}
