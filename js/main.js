@@ -19,6 +19,7 @@ require.config({
 		, MapView		: 'views/map'
 		, ListView		: 'views/list'
 		, NewView		: 'views/new'
+		, SideViews		: 'views/sideviews'
 		, Templates		: '../tpl/templates'
 		// router
 		, Router		: 'router'

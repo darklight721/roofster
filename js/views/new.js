@@ -4,6 +4,62 @@ define(function(require){
 
 	require('Bootstrap');
 
+	function showError(elem, errorMsg) {
+		if (!elem) return;
+		elem.parent().addClass('error');
+		elem.tooltip({
+			title : errorMsg
+		});
+	}
+
+	function removeError(elem) {
+		if (!elem) return;
+		elem.parent().removeClass('error');
+		elem.tooltip('destroy');
+	}
+
+	function validatePictures(files) {
+		if (!files || files.length > 3)
+			return false;
+		
+		for (var i = 0; i < files.length; i++)
+		{
+			var file = files[i];
+			
+			if (!file.type.match(/image.*/))
+				return false;
+			
+			if (file.size > 512000)
+				return false;
+		}
+		
+		return true;
+	}
+
+	function uploadPictures(id, files, success, error) {
+		if (!id || !files) return;
+
+		var formData = new FormData();
+			
+		$.each(files, function() {
+			formData.append('pictures[]', this);
+		});
+		
+		if (files.length > 0)
+		{
+			$.ajax({
+				url: 'api/upload/' + id,
+				type: 'POST',
+				data: formData,
+				cache: false,
+				contentType: false,
+				processData: false,
+				success: success,
+				error: error
+			});
+		}
+	}
+
 	return Backbone.View.extend({
 
 		initialize : function() {
@@ -30,17 +86,29 @@ define(function(require){
 		},
 
 		events : {
-			  'change #pictures' : 'changePictures'
-			, 'change' : 'change'
-			, 'click .type' : 'setType'
-			, 'click #save' : 'saveRoof'
+			  'click .type' : 'setType'
 			, 'click #picture_chooser' : 'openFile'
+			, 'change #pictures' : 'changePictures'
+			, 'change' : 'change'
+			, 'click #save' : 'saveRoof'
+		},
+
+		setType : function(evt) {
+			this.$('.type').removeClass('active');
+			this.$(evt.target).addClass('active');
+			this.model.set({
+				type : this.$(evt.target).data('type')
+			}, { silent : true });
+		},
+
+		openFile : function() {
+			this.$('#pictures').click();
 		},
 		
 		changePictures : function(evt) {
 			console.log('change pictures');
 			
-			var result = this.validatePictures(evt.target.files);
+			var result = validatePictures(evt.target.files);
 			if (result)
 			{
 				// display the names
@@ -67,22 +135,17 @@ define(function(require){
 			var error = this.model.validateAttr(attr);
 			if (error[evt.target.id])
 			{
-				this.showError(evt.target.id, error[evt.target.id]);
+				showError(
+					this.$('#' + evt.target.id),
+					error[evt.target.id]
+				);
 			}
 			else
 			{
-				this.removeError(evt.target.id);
+				removeError(this.$('#' + evt.target.id));
 				if (evt.target.dataset['dependency'])
-					this.removeError(evt.target.dataset['dependency']);
+					removeError(this.$('#' + evt.target.dataset['dependency']));
 			}
-		},
-		
-		setType : function(evt) {
-			this.$('.type').removeClass('active');
-			this.$(evt.target).addClass('active');
-			this.model.set({
-				type : this.$(evt.target).data('type')
-			}, { silent : true });
 		},
 		
 		saveRoof : function() {
@@ -94,7 +157,10 @@ define(function(require){
 				if (value)
 				{
 					errorFree = false;
-					this.showError(key, value);
+					showError(
+						this.$('#' + key),
+						value
+					);
 				}
 			}, this);
 
@@ -104,15 +170,32 @@ define(function(require){
 		        this.model.save(null, {
 		            success: function (model) {
 						console.log('save success');
-						self.uploadPictures(
-							function(data) {
-								console.log(data);
-								alert('Success');
-							},
-							function() {
-								alert('Error');
-							}
-						);
+						var files = self.$('#pictures')[0].files;
+						if (files)
+						{
+							window.location.href = "#roofs/" + self.model.get('id');
+						}
+						else
+						{
+							uploadPictures(
+								  self.model.get('id')
+								, files
+								, function(data) {
+									console.log(data);
+									if (data)
+									{
+										self.model.set({
+											pictures : data
+										}, { silent : true });
+									}
+									//alert('Success');
+									window.location.href = "#roofs/" + self.model.get('id');
+								  }
+								, function() {
+									alert('Error');
+								  }
+							);
+						}
 		            },
 		            error: function (error) {
 						console.log(error);
@@ -122,76 +205,19 @@ define(function(require){
 	    	}
 		},
 		
-		showError : function(elemId, errorMsg) {
-			var el = this.$('#' + elemId);
-			el.parent().addClass('error');
-			el.tooltip({
-				title : errorMsg
-			});
-		},
-
-		removeError : function(elemId) {
-			var el = this.$('#' + elemId);
-			el.parent().removeClass('error');
-			el.tooltip('destroy');
-		},
-		
 		modelChanged : function() {
 			console.log('roof attr changed');
 			if (this.model.hasChanged('address'))
 			{
-				this.$('#address').val(this.model.get('address'));
-				this.removeError('address');
+				var elem = this.$('#address');
+				elem.val(this.model.get('address'));
+				removeError(elem);
 			}
 			else if (this.model.hasChanged('latitude'))
 			{
-				this.removeError('latitude');
-			}
-		},
-		
-		openFile : function() {
-			this.$('#pictures').click();
-		},
-		
-		validatePictures : function(files) {
-			if (files.length > 3)
-				return false;
-			
-			for (var i = 0; i < files.length; i++)
-			{
-				var file = files[i];
-				
-				if (!file.type.match(/image.*/))
-					return false;
-				
-				if (file.size > 512000)
-					return false;
-			}
-			
-			return true;
-		},
-		
-		uploadPictures : function(success, error) {
-			var formData = new FormData(),
-				files = this.$('#pictures')[0].files;
-				
-			$.each(files, function() {
-				formData.append('pictures[]', this);
-			});
-			
-			if (files.length > 0)
-			{
-				$.ajax({
-					url: 'api/upload/' + this.model.get('id'),
-					type: 'POST',
-					data: formData,
-					cache: false,
-					contentType: false,
-					processData: false,
-					success: success,
-					error: error
-				});
+				removeError(this.$('#latitude'));
 			}
 		}
+
 	});
 });

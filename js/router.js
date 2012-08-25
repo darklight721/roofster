@@ -5,7 +5,8 @@ define(function(require){
 		, HeaderView = require('HeaderView')
 		, HomeView = require('HomeView')
 		, GenericView = require('GenericView')
-		, Templates = require('Templates');
+		, Templates = require('Templates')
+		, SideViews = require('SideViews');
 
 	return Backbone.Router.extend({
 
@@ -25,7 +26,7 @@ define(function(require){
 		home : function() {
 			console.log("home");
 			this.showHome();
-			this.homeView.setSideView("list");
+			this.homeView.setSideView(SideViews.LIST, null);
 		},
 
 		about : function() {
@@ -62,7 +63,7 @@ define(function(require){
 			{
 				this.showHome();
 			}
-			this.homeView.setSideView("new");
+			this.homeView.setSideView(SideViews.NEW, null);
 		},
 		
 		detailsRoof : function(id) {
@@ -71,7 +72,7 @@ define(function(require){
 			{
 				this.showHome();
 			}
-			this.homeView.setSideView("details", id);
+			this.homeView.setSideView(SideViews.DETAILS, id);
 		},
 		
 		showHome : function() {

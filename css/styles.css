@@ -7,6 +7,10 @@ body {
 	height: 600px;
 }
 
+.map-tile img {
+	max-width: none;
+}
+
 .new, .details h3 {
 	display: inline-block;
 }
@@ -22,6 +26,7 @@ body {
 
 .new .btn.span3, .details .btn.span3 {
 	margin-left: 0;
+	margin-top: 10px;
 }
 
 .new .btn-group .btn {

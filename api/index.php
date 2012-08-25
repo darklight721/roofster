@@ -166,7 +166,7 @@ function uploadPictures($id) {
 				$stmt->bindParam("id", $id);
 				$stmt->execute();
 				$db = null;
-				$ret = "success";
+				$ret = $pictureLinks;
 			} catch(PDOException $e) {
 				echo '{"error":{"text":'. $e->getMessage() .'}}';
 			}

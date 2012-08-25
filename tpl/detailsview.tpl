@@ -40,7 +40,7 @@
 		<ul class="thumbnails">
 		{{#each pictures}}
 			<li class="span2">
-				<a href="#" class="thumbnail">
+				<a href="{{this}}" class="thumbnail" target="_blank">
 					<img src="{{this}}">
 				</a>
 			</li>

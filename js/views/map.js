@@ -1,5 +1,12 @@
 
-define(['Backbone','Templates'], function(Backbone, Templates){
+define(function(require){
+	var   Backbone = require('Backbone')
+		, Templates = require('Templates')
+		, Roofs = require('Roofs')
+		, SideViews = require('SideViews');
+
+
+
 	return Backbone.View.extend({
 
 		initialize : function() {	
@@ -24,6 +31,7 @@ define(['Backbone','Templates'], function(Backbone, Templates){
 			this.geocoder = new google.maps.Geocoder();
 			this.markers = [];
 			this.currentLoc = null;
+			this.currentMarker = null;
 		},
 
 		render : function() {
@@ -90,12 +98,16 @@ define(['Backbone','Templates'], function(Backbone, Templates){
 						}
 						else
 						{
-							self.placeMarker(evt.latLng);
+							self.placeMarker(evt.latLng, {
+								draggable : true,
+								animation : google.maps.Animation.DROP
+							});
 						}
 						self.updateRoof(evt.latLng);
 					});
 					break;
 				case "details" :
+					
 					if (this.model && this.model.models) // check if model is a collection
 					{
 						var roofs = this.model.where({
@@ -104,10 +116,53 @@ define(['Backbone','Templates'], function(Backbone, Templates){
 
 						if (roofs.length > 0)
 						{
-							
+							var mapBounds = this.map.getBounds();
+							var latLng = new google.maps.LatLng(
+								model.get('latitude'),
+								model.get('longitude')
+							);
+
+							if (!mapBounds.contains(latLng)) 
+							{
+								this.map.setCenter(latLng);
+							}
+
+							this.animateMarker(model.get('id'));
+							return;
 						}
 					}
+					else if (this.model)
+					{
+						this.clearMap();
+					}
+
+					this.model = new Roofs();
+
+					this.map.setCenter(new google.maps.LatLng(
+						model.get('latitude'),
+						model.get('longitude')
+					));
+
+					this.fetchRoofs(function(){
+						self.animateMarker(model.get('id'));
+					});
+
 					break;
+			}
+		},
+
+		animateMarker : function(modelId) {
+			var ids = this.model.pluck('id');
+			var index = _.indexOf(ids, modelId);
+
+			if (index > -1)
+			{
+				if (this.currentMarker)
+				{
+					this.currentMarker.setAnimation(null);
+				}
+				this.currentMarker = this.markers[index];
+				this.currentMarker.setAnimation(google.maps.Animation.BOUNCE);
 			}
 		},
 		
@@ -121,11 +176,17 @@ define(['Backbone','Templates'], function(Backbone, Templates){
 			google.maps.event.clearInstanceListeners(this.map);
 		},
 		
-		placeMarker : function(latLng) {		
-			var marker = new google.maps.Marker({
+		placeMarker : function(latLng, options) {		
+			var markerOptions = {
 				position : latLng,
 				map : this.map
-			});
+			};
+			if (options)
+			{
+				markerOptions = _.extend(markerOptions, options);
+			}
+			
+			var marker = new google.maps.Marker(markerOptions);
 			this.markers.push(marker);
 		},
 		
@@ -162,18 +223,21 @@ define(['Backbone','Templates'], function(Backbone, Templates){
 			);
 		},
 		
-		fetchRoofs : function() {
+		fetchRoofs : function(callback) {
 			if (!this.model)
 				return;
 				
 			var self = this,
 				centerLoc = this.map.getCenter();
+
+			console.log(this.model.url);
 			
 			this.model.fetch({
 				  url : self.model.url + '/search/' + centerLoc.lat() + '/' + centerLoc.lng() + '/' + '0.01'
 				, success : function(){
 					console.log('fetch collection success');
 					self.placeMarkers();
+					if (callback) callback();
 				}
 			});
 		},
@@ -184,7 +248,14 @@ define(['Backbone','Templates'], function(Backbone, Templates){
 					roof.get('latitude'),
 					roof.get('longitude')
 				));
-				_.last(this.markers).setTitle(roof.get('type'));
+				var marker = _.last(this.markers);
+				marker.setTitle(roof.get('type'));
+
+				google.maps.event.addListener(marker, 'click', function(){
+					console.log('marker clicked');
+					//window.app.navigate('roofs/' + roof.get('id'));
+					window.location.href = '#roofs/' + roof.get('id');
+				});
 			}, this);
 		}
 	});
