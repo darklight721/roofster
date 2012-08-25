@@ -171,7 +171,7 @@ define(function(require){
 		            success: function (model) {
 						console.log('save success');
 						var files = self.$('#pictures')[0].files;
-						if (files)
+						if (!files)
 						{
 							window.location.href = "#roofs/" + self.model.get('id');
 						}
