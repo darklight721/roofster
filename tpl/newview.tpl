@@ -63,6 +63,6 @@
 			<input id="passcode" class="span3" size="16" type="password" data-dependency="email">
 		</div>
 		<legend><i class="icon-exclamation-sign"></i> A roof will eventually be removed after 60 days from the day it was created, regardless if you have entered the previous details.</legend>
-		<button id="save" class="btn btn-primary span3" type="button">Save</button>
+		<button id="save" class="btn btn-primary span3" type="button" data-loading-text="Saving...">Save</button>
 	</form>
 </div>

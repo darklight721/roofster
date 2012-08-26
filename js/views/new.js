@@ -166,13 +166,17 @@ define(function(require){
 
 			if (errorFree)
 			{
+				// set button state
+				this.$('#save').button('loading');
+
 				var self = this;
 		        this.model.save(null, {
 		            success: function (model) {
 						console.log('save success');
 						var files = self.$('#pictures')[0].files;
-						if (!files)
+						if (files.length === 0)
 						{
+							console.log('no pictures');
 							window.location.href = "#roofs/" + self.model.get('id');
 						}
 						else
@@ -192,6 +196,8 @@ define(function(require){
 									window.location.href = "#roofs/" + self.model.get('id');
 								  }
 								, function() {
+									// set button state
+									self.$('#save').button('reset');
 									alert('Error');
 								  }
 							);
@@ -199,6 +205,8 @@ define(function(require){
 		            },
 		            error: function (error) {
 						console.log(error);
+						// set button state
+						self.$('#save').button('reset');
 		                alert('Error');
 		            }
 		        });
