@@ -71,14 +71,14 @@ define(['Backbone'], function(Backbone){
 				return false;
 			},
 			email : function(value, self) {
-				if (value.length === 0 && self.get('passcode').length === 0)
+				if (value.length === 0 && self.get('passcode').length === 0 && !self.get('id'))
 					return false;
 				if (!(value && value.length <= 128 && /^([\w!.%+\-])+@([\w\-])+(?:\.[\w\-]+)+$/.test(value)))
 					return 'Email is invalid.';
 				return false;
 			},
 			passcode : function(value, self) {
-				if (value.length === 0 && self.get('email').length === 0)
+				if (value.length === 0 && self.get('email').length === 0 && !self.get('id'))
 					return false;
 				if (!(value && value.length >= 4 && value.length <= 16))
 					return 'Passcode should be between 4 to 16 characters long.';

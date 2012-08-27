@@ -60,11 +60,19 @@ define(function(require){
 		}
 	}
 
+	function extractPictureNames(pictures, id) {
+		var names = '';
+		$.each(pictures, function(){
+			names += this.replace('pics/' + id + '/', '') + ' ';
+		});
+		return names;
+	}
+
 	return Backbone.View.extend({
 
 		initialize : function() {
 			this.template = Templates.renderNewView();
-			this.render();
+			//this.render();
 		},
 		
 		setModel : function(model) {
@@ -73,8 +81,20 @@ define(function(require){
 		},
 
 		render : function() {
+			var data = {};
+			if (this.model)
+			{
+				data = this.model.toJSON();
+				data = _.extend(data, {
+					  isRoom : data.type === 'room'
+					, isApartment : data.type === 'apartment'
+					, isHouse : data.type === 'house'
+					, pictureNames : data.pictures ? extractPictureNames(data.pictures, data.id) : ''
+				});
+			}
+
 			this.$el.html(
-				this.template()
+				this.template(data)
 			);
 			
 			// set tooltip for pictures
@@ -87,6 +107,7 @@ define(function(require){
 
 		events : {
 			  'click .type' : 'setType'
+			, 'click #clear' : 'clearPictures'
 			, 'click #picture_chooser' : 'openFile'
 			, 'change #pictures' : 'changePictures'
 			, 'change' : 'change'
@@ -99,6 +120,11 @@ define(function(require){
 			this.model.set({
 				type : this.$(evt.target).data('type')
 			}, { silent : true });
+		},
+
+		clearPictures : function() {
+			this.$('#pictures')[0].files = [];
+			this.$('#picture_names').val('');
 		},
 
 		openFile : function() {
@@ -120,7 +146,7 @@ define(function(require){
 			}
 			else
 			{
-				this.$(evt.target)[0].files = [];
+				this.clearPictures();
 			}
 			
 			return false; // so this event won't be captured in change event below anymore
@@ -171,16 +197,12 @@ define(function(require){
 
 				var self = this;
 		        this.model.save(null, {
-		            success: function (model) {
-						console.log('save success');
+		            success: function (model, response) {
+		            	console.log('save success');
 						var files = self.$('#pictures')[0].files;
-						if (files.length === 0)
+						if (files.length > 0)
 						{
-							console.log('no pictures');
-							window.location.href = "#roofs/" + self.model.get('id');
-						}
-						else
-						{
+							console.log('uploading pictures');
 							uploadPictures(
 								  self.model.get('id')
 								, files
@@ -189,7 +211,7 @@ define(function(require){
 									if (data)
 									{
 										self.model.set({
-											pictures : data
+											pictures : JSON.parse(data)
 										}, { silent : true });
 									}
 									//alert('Success');
@@ -198,16 +220,21 @@ define(function(require){
 								, function() {
 									// set button state
 									self.$('#save').button('reset');
-									alert('Error');
+									alert('Uploading Pictures Error.');
 								  }
 							);
+						}
+						else
+						{
+							console.log('no pictures');
+							window.location.href = "#roofs/" + self.model.get('id');
 						}
 		            },
 		            error: function (error) {
 						console.log(error);
 						// set button state
 						self.$('#save').button('reset');
-		                alert('Error');
+		                alert('Saving Roof Error.');
 		            }
 		        });
 	    	}

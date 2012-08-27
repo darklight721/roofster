@@ -49,5 +49,5 @@
 	</div>
 	{{/if}}
 	
-	<button class="btn span3" type="button"><i class="icon-edit"></i> Edit</button>
+	<a class="btn span3" href="#roofs/{{id}}/edit"><i class="icon-edit"></i> Edit</a>
 </div>

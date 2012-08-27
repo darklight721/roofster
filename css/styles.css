@@ -1,5 +1,6 @@
 body {
     padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+    padding-bottom: 10px;
 }
 
 .map-tile {
@@ -27,6 +28,16 @@ body {
 .new .btn.span3, .details .btn.span3 {
 	margin-left: 0;
 	margin-top: 10px;
+}
+
+.new #clear {
+	font-size: 10px;
+	margin-left: 5px;
+	cursor: pointer;
+}
+
+.new #clear:hover {
+	text-decoration: underline;
 }
 
 .new .btn-group .btn {

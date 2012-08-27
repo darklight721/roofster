@@ -16,6 +16,7 @@ define(function(require){
 			, "contact"			: "contact"
 			, "roofs/new"		: "newRoof"
 			, "roofs/:id"		: "detailsRoof"
+			, "roofs/:id/edit"	: "editRoof"
 		},
 
 		initialize : function() {
@@ -73,6 +74,15 @@ define(function(require){
 				this.showHome();
 			}
 			this.homeView.setSideView(SideViews.DETAILS, id);
+		},
+
+		editRoof : function(id) {
+			console.log("edit roof");
+			if (!this.isHomeView)
+			{
+				this.showHome();
+			}
+			this.homeView.setSideView(SideViews.EDIT, id);
 		},
 		
 		showHome : function() {

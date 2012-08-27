@@ -142,10 +142,22 @@ function findByAddress($query) {
 }
 
 function uploadPictures($id) {
-	$ret = "error";
-	if (isset($id) && isset($_FILES["pictures"])) {
+	$ret = "";
+	if (isset($id)) {
 		$path = "../pics/$id";
-		if (mkdir($path, 0777, true)) {
+
+        $success = true;
+        if (is_dir($path)) {
+            foreach (new DirectoryIterator($path) as $file) {
+                if ($file->isFile())
+                    unlink($file->getPathname());
+            }
+        }
+        else {
+            $success = mkdir($path, 0777, true);
+        }
+
+		if ($success && isset($_FILES["pictures"])) {
 			$path .= "/";
 			$paths = [];
 			

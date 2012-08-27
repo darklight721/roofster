@@ -99,7 +99,6 @@ define(function(require){
 						else
 						{
 							self.placeMarker(evt.latLng, {
-								draggable : true,
 								animation : google.maps.Animation.DROP
 							});
 						}

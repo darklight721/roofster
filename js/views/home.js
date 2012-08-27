@@ -44,20 +44,13 @@ define(function(require){
 
 		var self = this;
 		// helper
-		var prepareDetails = function(roof) {
-			if (roof.has('pictures'))
-			{
-				roof.set({
-					pictures : JSON.parse(roof.get('pictures'))
-				});
-			}
-		
+		var prepareDetails = function() {
 			self.assign(new GenericView({
 				template : Templates.renderDetailsView(),
-				data : roof.toJSON()
+				data : self.roof.toJSON()
 			}), '.side-div');
 
-			self.mapView.prepareFor('details', roof);
+			self.mapView.prepareFor('details', self.roof);
 		};
 
 		if (this.roof && this.roof.get('id') === modelId)
@@ -67,11 +60,55 @@ define(function(require){
 		}
 		else
 		{				
-			var roof = new Roof({ id : modelId });
+			this.roof = new Roof({ id : modelId });
 				
-			roof.fetch({ success : function(model, response){
+			this.roof.fetch({ success : function(model, response){
 				if (!response) return;
-				prepareDetails(roof);
+
+				if (self.roof.has('pictures'))
+				{
+					self.roof.set({
+						pictures : JSON.parse(self.roof.get('pictures'))
+					});
+				}
+				prepareDetails();
+			}});
+		}
+	};
+
+	views[SideViews.EDIT] = function(modelId) {
+		if (!modelId) return;
+
+		var self = this;
+
+		var prepareEdit = function() {
+			if (!self.newView)
+			{
+				self.newView = new NewView();
+			}
+			self.newView.setModel(self.roof);
+			self.assign(self.newView, '.side-div');
+		};
+
+		if (this.roof && this.roof.get('id') === modelId)
+		{
+			prepareEdit();
+		}
+		else
+		{
+			console.log(modelId);
+			this.roof = new Roof({ id : modelId });
+
+			this.roof.fetch({ success : function(model, response){
+				if (!response) return;
+
+				if (self.roof.has('pictures'))
+				{
+					self.roof.set({
+						pictures : JSON.parse(self.roof.get('pictures'))
+					});
+				}
+				prepareEdit();
 			}});
 		}
 	};
