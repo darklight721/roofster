@@ -65,6 +65,114 @@ define(function(require){
 		return names;
 	}
 
+	function checkForErrors(attrs) {
+		var errorFree = true;
+		var errors = this.model.validateAttr(attrs);
+		_.each(errors, function(value, key){
+			if (value)
+			{
+				errorFree = false;
+				showError(
+					this.$('#' + key),
+					value
+				);
+			}
+		}, this);
+		return errorFree;
+	}
+
+	function saveRoof_success(response) {
+		if (response === 'error')
+		{
+			saveRoof_error.call(this);
+		}
+		else
+		{
+			console.log('save success');
+			var files = this.$('#pictures')[0].files;
+			if (files.length > 0 || (this.model.has('pictures') && this.$('#picture_names').val() === ''))
+			{
+				console.log('uploading pictures');
+				var self = this;
+				uploadPictures(
+					  this.model.get('id')
+					, files
+					, function(response) {
+						uploadPictures_success.call(self, response);
+					  }
+					, function() {
+						uploadPictures_error.call(self);
+					  }
+				);
+			}
+			else
+			{
+				console.log('no pictures');
+				window.location.href = '#roofs/' + this.model.get('id');
+			}
+		}
+	}
+
+	function saveRoof_error() {
+		var elem = this.$('#save');
+		// set button state
+		elem.button('reset');
+        elem.popover({
+        	  trigger : 'manual'
+        	, title : 'Error Saving Roof <button class="close" type="button" onclick=\'$("#save").popover("destroy");\'>&times;</button>'
+        	, content : 'Please make sure your email and passcode match the ones you\'ve entered when you created this roof.'
+        });
+        elem.popover('show');
+	}
+
+	function uploadPictures_success(response) {
+		console.log(response);
+		if (response !== 'error')
+		{
+			this.model.set({
+				pictures : JSON.parse(response)
+			}, { silent : true });
+		}
+		//alert('Success');
+		window.location.href = '#roofs/' + this.model.get('id');
+	}
+
+	function uploadPictures_error() {
+		var elem = this.$('#save');
+		// set button state
+		elem.button('reset');
+        elem.popover({
+        	  trigger : 'manual'
+        	, title : 'Error Uploading Pictures <button class="close" type="button" onclick=\'$("#save").popover("destroy");\'>&times;</button>'
+        	, content : 'There was a server error while uploading your pictures. Please try again.'
+        });
+        elem.popover('show');
+	}
+
+	function deleteRoof_success(response) {
+		console.log(response);
+		if (response === 0)
+		{
+			deleteRoof_error.call(this);
+		}
+		else
+		{
+			window.location.href = '#';
+		}
+	}
+
+	function deleteRoof_error() {
+		var elem = this.$('#remove');
+		// set button state
+		elem.button('reset');
+        elem.popover({
+        	  trigger : 'manual'
+        	, title : 'Error Removing Roof <button class="close" type="button" onclick=\'$("#remove").popover("destroy");\'>&times;</button>'
+        	, content : 'Please make sure your email and passcode match the ones you\'ve entered when you created this roof.'
+        });
+        elem.popover('show');
+	}
+
 	return Backbone.View.extend({
 
 		initialize : function() {
@@ -104,8 +212,8 @@ define(function(require){
 
 		events : {
 			  'click .type' : 'setType'
-			, 'click #clear' : 'clearPictures'
-			, 'click #picture_chooser' : 'openFile'
+			, 'click #picture_clear' : 'clearPictures'
+			, 'click #picture_choose' : 'openPictures'
 			, 'change #pictures' : 'changePictures'
 			, 'change' : 'change'
 			, 'click #save' : 'saveRoof'
@@ -125,7 +233,7 @@ define(function(require){
 			this.$('#picture_names').val('');
 		},
 
-		openFile : function() {
+		openPictures : function() {
 			this.$('#pictures').click();
 		},
 		
@@ -151,7 +259,7 @@ define(function(require){
 		},
 
 		change : function(evt) {
-			console.log(evt);
+			console.log('change');
 			var attr = {};
 			attr[evt.target.id] = $.trim(evt.target.value);
 			this.model.set(attr, { silent : true });
@@ -174,73 +282,22 @@ define(function(require){
 		
 		saveRoof : function() {
 			console.log('save roof');
-			
-			var errorFree = true;
-			var error = this.model.validateAttr(this.model.toJSON());
-			_.each(error, function(value, key){
-				if (value)
-				{
-					errorFree = false;
-					showError(
-						this.$('#' + key),
-						value
-					);
-				}
-			}, this);
 
+			var errorFree = checkForErrors.call(this, this.model.toJSON());
 			if (errorFree)
 			{
 				// set button state
 				this.$('#save').button('loading');
+				this.$('#save').popover('destroy');
+				this.$('#remove').popover('destroy');
 
 				var self = this;
 		        this.model.save(null, {
 		            success: function (model, response) {
-						if (response === 'error')
-						{
-							self.$('#save').button('reset');
-							alert('Email and Passcode did not match.');
-						}
-						else
-						{
-							console.log('save success');
-							var files = self.$('#pictures')[0].files;
-							if (files.length > 0 || (self.model.has('pictures') && self.$('#picture_names').val() === ''))
-							{
-								console.log('uploading pictures');
-								uploadPictures(
-									  self.model.get('id')
-									, files
-									, function(data) {
-										console.log(data);
-										if (data !== 'error')
-										{
-											self.model.set({
-												pictures : JSON.parse(data)
-											}, { silent : true });
-										}
-										//alert('Success');
-										window.location.href = '#roofs/' + self.model.get('id');
-									  }
-									, function() {
-										// set button state
-										self.$('#save').button('reset');
-										alert('Uploading Pictures Error.');
-									  }
-								);
-							}
-							else
-							{
-								console.log('no pictures');
-								window.location.href = '#roofs/' + self.model.get('id');
-							}
-						}
+						saveRoof_success.call(self, response);
 		            },
 		            error: function (error) {
-						console.log(error);
-						// set button state
-						self.$('#save').button('reset');
-		                alert('Saving Roof Error.');
+						saveRoof_error.call(self);
 		            }
 		        });
 	    	}
@@ -249,48 +306,30 @@ define(function(require){
 		deleteRoof : function() {
 			console.log('deleting roof');
 			if (this.model.get('id'))
-			{
-				var errorFree = true;
-				var errors = this.model.validateAttr(_.pick(this.model.toJSON(), 'email', 'passcode'));
-				_.each(errors, function(value, key){
-					if (value)
-					{
-						errorFree = false;
-						showError(
-							this.$('#' + key),
-							value
-						);
-					}
-				}, this);
-				
+			{	
+				var errorFree = checkForErrors.call(this, {
+					email : this.model.get('email'),
+					passcode : this.model.get('passcode')
+				});
+
 				if (errorFree)
 				{
 					this.$('#remove').button('loading');
+					this.$('#save').popover('destroy');
+					this.$('#remove').popover('destroy');
 					
 					var self = this;
-					var error = function() {
-						self.$('#remove').button('reset');
-						alert('Deleting Roof Error.');
-					};
-					
 					this.model.destroy({
 						  url : this.model.url() + '/' + this.model.get('email') + '/' + this.model.get('passcode')
 						, success : function(model, response) {
-							console.log(response);
-							if (response === 0)
-							{
-								error();
-							}
-							else
-							{
-								window.location.href = '#';
-							}
+							deleteRoof_success.call(this, response);
 						  }
-						, error : error
+						, error : function() {
+							deleteRoof_error.call(this);
+						}
 					});
 				}
 			}
-			
 		},
 		
 		modelChanged : function() {

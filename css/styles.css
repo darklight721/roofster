@@ -30,13 +30,13 @@ body {
 	margin-top: 10px;
 }
 
-.new #clear {
+.new #picture_clear {
 	font-size: 10px;
 	margin-left: 5px;
 	cursor: pointer;
 }
 
-.new #clear:hover {
+.new #picture_clear:hover {
 	text-decoration: underline;
 }
 

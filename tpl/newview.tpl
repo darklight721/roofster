@@ -44,11 +44,11 @@
 			<textarea id="details" class="span3" rows="4">{{details}}</textarea>
 		</div>
 		<div class="control-group">
-			<span class="label label-info">Pictures</span><span id="clear">[Clear]</span>
+			<span class="label label-info">Pictures</span><span id="picture_clear">[Clear]</span>
 			<br/>
 			<input id="pictures" type="file" style="display:none" accept="image/*" multiple>
 			<div class="input-prepend">
-				<button id="picture_chooser" class="btn" type="button" style="margin-bottom:9px;">&nbsp;<i class="icon-picture"></i>&nbsp;</button><input id="picture_names" size="16" type="text" readonly style="width:168px;margin-bottom:9px;" value="{{pictureNames}}">
+				<button id="picture_choose" class="btn" type="button" style="margin-bottom:9px;">&nbsp;<i class="icon-picture"></i>&nbsp;</button><input id="picture_names" size="16" type="text" readonly style="width:168px;margin-bottom:9px;" value="{{pictureNames}}">
 			</div>
 		</div>
 		{{#if id}}
