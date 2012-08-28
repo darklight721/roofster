@@ -9,9 +9,9 @@ $app->get('/roofs/:id', 'getRoof');
 $app->get('/roofs/search/:query', 'findByAddress');
 $app->get('/roofs/search/:lat/:lng/:radius', 'findByLatLng');
 $app->post('/roofs', 'addRoof');
+$app->post('/upload/:id', 'uploadPictures');
 $app->put('/roofs/:id', 'updateRoof');
 $app->delete('/roofs/:id/:email/:passcode', 'deleteRoof');
-$app->post('/upload/:id', 'uploadPictures');
 
 $app->run();
 
@@ -94,78 +94,101 @@ function addRoof() {
 }
 
 function updateRoof($id) {
+	$ret = "error";
     $request = Slim::getInstance()->request();
     $body = $request->getBody();
     $roof = json_decode($body);
+	$sqlCheck = "SELECT COUNT(*) FROM roof WHERE id=:id and email=:email and passcode=:passcode";
     $sql = "UPDATE roof SET type=:type, address=:address, city=:city, country=:country, rate=:rate, latitude=:latitude, longitude=:longitude, contact_person=:contact_person, contact_number=:contact_number, details=:details WHERE id=:id and email=:email and passcode=:passcode";
     try {
         $db = getConnection();
-        $stmt = $db->prepare($sql);
-        $stmt->bindParam("type", $roof->type);
-        $stmt->bindParam("address", $roof->address);
-        $stmt->bindParam("city", $roof->city);
-        $stmt->bindParam("country", $roof->country);
-        $stmt->bindParam("rate", $roof->rate);
-        $stmt->bindParam("latitude", $roof->latitude);
-        $stmt->bindParam("longitude", $roof->longitude);
-        $stmt->bindParam("contact_person", $roof->contact_person);
-        $stmt->bindParam("contact_number", $roof->contact_number);
-        $stmt->bindParam("details", $roof->details);
-        $stmt->bindParam("id", $id);
-        $stmt->bindParam("email", $roof->email);
+        $stmt = $db->prepare($sqlCheck);
+		$stmt->bindParam("id", $id);
+		$stmt->bindParam("email", $roof->email);
         $stmt->bindParam("passcode", $roof->passcode);
-        $stmt->execute();
+		$stmt->execute();
+		if ($stmt->fetchColumn() > 0)
+		{
+			$stmt = $db->prepare($sql);
+			$stmt->bindParam("type", $roof->type);
+			$stmt->bindParam("address", $roof->address);
+			$stmt->bindParam("city", $roof->city);
+			$stmt->bindParam("country", $roof->country);
+			$stmt->bindParam("rate", $roof->rate);
+			$stmt->bindParam("latitude", $roof->latitude);
+			$stmt->bindParam("longitude", $roof->longitude);
+			$stmt->bindParam("contact_person", $roof->contact_person);
+			$stmt->bindParam("contact_number", $roof->contact_number);
+			$stmt->bindParam("details", $roof->details);
+			$stmt->bindParam("id", $id);
+			$stmt->bindParam("email", $roof->email);
+			$stmt->bindParam("passcode", $roof->passcode);
+			$stmt->execute();
+			$ret = json_encode($roof);
+		}
         $db = null;
-        echo json_encode($roof);
+        echo $ret;
     } catch(PDOException $e) {
         echo '{"error":{"text":'. $e->getMessage() .'}}';
     }
 }
 
 function deleteRoof($id, $email, $passcode) {
-    $sql = "DELETE FROM roof WHERE id=:id and email=:email and passcode=:passcode";
-    try {
-        $db = getConnection();
-        $stmt = $db->prepare($sql);
-        $stmt->bindParam("id", $id);
-        $stmt->bindParam("email", $email);
-        $stmt->bindParam("passcode", $passcode);
-        $stmt->execute();
-        $db = null;
-    } catch(PDOException $e) {
-        echo '{"error":{"text":'. $e->getMessage() .'}}';
-    }
+	$sql = "DELETE FROM roof WHERE id=:id and email=:email and passcode=:passcode";
+	try {
+		$db = getConnection();
+		$stmt = $db->prepare($sql);
+		$stmt->bindParam("id", $id);
+		$stmt->bindParam("email", $email);
+		$stmt->bindParam("passcode", $passcode);
+		$stmt->execute();
+		$count = $stmt->rowCount();
+		$db = null;
+		if ($count > 0)
+			deletePictures("../pics/$id");
+		echo $count;
+	} catch(PDOException $e) {
+		echo '{"error":{"text":'. $e->getMessage() .'}}';
+	}
 }
 
 function findByAddress($query) {
 	echo $query;
 }
 
+function deletePictures($path) {
+	if (is_dir($path)) {
+		foreach (new DirectoryIterator($path) as $file) {
+			if ($file->isFile())
+				unlink($file->getPathname());
+		}
+	}
+}
+
 function uploadPictures($id) {
-	$ret = "";
+	$ret = "error";
 	if (isset($id)) {
 		$path = "../pics/$id";
 
         $success = true;
         if (is_dir($path)) {
-            foreach (new DirectoryIterator($path) as $file) {
-                if ($file->isFile())
-                    unlink($file->getPathname());
-            }
+			deletePictures($path);
         }
         else {
             $success = mkdir($path, 0777, true);
         }
 
-		if ($success && isset($_FILES["pictures"])) {
+		if ($success) {
 			$path .= "/";
 			$paths = [];
 			
-			foreach($_FILES["pictures"]["error"] as $key => $error) {
-				$tmp_name = $_FILES["pictures"]["tmp_name"][$key];
-				$name = $_FILES["pictures"]["name"][$key];
-				move_uploaded_file($tmp_name, $path . $name);
-				$paths[$key] = "pics/$id/" . $name;
+			if (isset($_FILES["pictures"])) {
+				foreach($_FILES["pictures"]["error"] as $key => $error) {
+					$tmp_name = $_FILES["pictures"]["tmp_name"][$key];
+					$name = $_FILES["pictures"]["name"][$key];
+					move_uploaded_file($tmp_name, $path . $name);
+					$paths[$key] = "pics/$id/" . $name;
+				}
 			}
 			
 			// update pictures field in roof table

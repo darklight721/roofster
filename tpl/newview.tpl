@@ -59,12 +59,12 @@
 		<div class="control-group">
 			<span class="label label-info">Email</span>
 			<br/>
-			<input id="email" class="span3" size="16" type="email" data-dependency="passcode">
+			<input id="email" class="span3" size="16" type="email" data-dependency="passcode" value="{{email}}">
 		</div>
 		<div class="control-group">
 			<span class="label label-info">Passcode</span>
 			<br/>
-			<input id="passcode" class="span3" size="16" type="password" data-dependency="email">
+			<input id="passcode" class="span3" size="16" type="password" data-dependency="email" value={{passcode}}>
 		</div>
 		{{#unless id}}
 		<legend><i class="icon-exclamation-sign"></i> A roof will eventually be removed after 60 days from the day it was created, regardless if you have entered the previous details.</legend>

@@ -88,6 +88,8 @@ define(function(require){
 			}
 			self.newView.setModel(self.roof);
 			self.assign(self.newView, '.side-div');
+			
+			self.mapView.prepareFor('new', self.roof);
 		};
 
 		if (this.roof && this.roof.get('id') === modelId)

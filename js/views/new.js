@@ -37,7 +37,7 @@ define(function(require){
 	}
 
 	function uploadPictures(id, files, success, error) {
-		if (!id || !files) return;
+		if (!id) return;
 
 		var formData = new FormData();
 			
@@ -45,19 +45,16 @@ define(function(require){
 			formData.append('pictures[]', this);
 		});
 		
-		if (files.length > 0)
-		{
-			$.ajax({
-				url: 'api/upload/' + id,
-				type: 'POST',
-				data: formData,
-				cache: false,
-				contentType: false,
-				processData: false,
-				success: success,
-				error: error
-			});
-		}
+		$.ajax({
+			url: 'api/upload/' + id,
+			type: 'POST',
+			data: formData,
+			cache: false,
+			contentType: false,
+			processData: false,
+			success: success,
+			error: error
+		});
 	}
 
 	function extractPictureNames(pictures, id) {
@@ -112,6 +109,7 @@ define(function(require){
 			, 'change #pictures' : 'changePictures'
 			, 'change' : 'change'
 			, 'click #save' : 'saveRoof'
+			, 'click #remove' : 'deleteRoof'
 		},
 
 		setType : function(evt) {
@@ -198,36 +196,44 @@ define(function(require){
 				var self = this;
 		        this.model.save(null, {
 		            success: function (model, response) {
-		            	console.log('save success');
-						var files = self.$('#pictures')[0].files;
-						if (files.length > 0)
+						if (response === 'error')
 						{
-							console.log('uploading pictures');
-							uploadPictures(
-								  self.model.get('id')
-								, files
-								, function(data) {
-									console.log(data);
-									if (data)
-									{
-										self.model.set({
-											pictures : JSON.parse(data)
-										}, { silent : true });
-									}
-									//alert('Success');
-									window.location.href = "#roofs/" + self.model.get('id');
-								  }
-								, function() {
-									// set button state
-									self.$('#save').button('reset');
-									alert('Uploading Pictures Error.');
-								  }
-							);
+							self.$('#save').button('reset');
+							alert('Email and Passcode did not match.');
 						}
 						else
 						{
-							console.log('no pictures');
-							window.location.href = "#roofs/" + self.model.get('id');
+							console.log('save success');
+							var files = self.$('#pictures')[0].files;
+							if (files.length > 0 || (self.model.has('pictures') && self.$('#picture_names').val() === ''))
+							{
+								console.log('uploading pictures');
+								uploadPictures(
+									  self.model.get('id')
+									, files
+									, function(data) {
+										console.log(data);
+										if (data !== 'error')
+										{
+											self.model.set({
+												pictures : JSON.parse(data)
+											}, { silent : true });
+										}
+										//alert('Success');
+										window.location.href = '#roofs/' + self.model.get('id');
+									  }
+									, function() {
+										// set button state
+										self.$('#save').button('reset');
+										alert('Uploading Pictures Error.');
+									  }
+								);
+							}
+							else
+							{
+								console.log('no pictures');
+								window.location.href = '#roofs/' + self.model.get('id');
+							}
 						}
 		            },
 		            error: function (error) {
@@ -238,6 +244,53 @@ define(function(require){
 		            }
 		        });
 	    	}
+		},
+		
+		deleteRoof : function() {
+			console.log('deleting roof');
+			if (this.model.get('id'))
+			{
+				var errorFree = true;
+				var errors = this.model.validateAttr(_.pick(this.model.toJSON(), 'email', 'passcode'));
+				_.each(errors, function(value, key){
+					if (value)
+					{
+						errorFree = false;
+						showError(
+							this.$('#' + key),
+							value
+						);
+					}
+				}, this);
+				
+				if (errorFree)
+				{
+					this.$('#remove').button('loading');
+					
+					var self = this;
+					var error = function() {
+						self.$('#remove').button('reset');
+						alert('Deleting Roof Error.');
+					};
+					
+					this.model.destroy({
+						  url : this.model.url() + '/' + this.model.get('email') + '/' + this.model.get('passcode')
+						, success : function(model, response) {
+							console.log(response);
+							if (response === 0)
+							{
+								error();
+							}
+							else
+							{
+								window.location.href = '#';
+							}
+						  }
+						, error : error
+					});
+				}
+			}
+			
 		},
 		
 		modelChanged : function() {

@@ -5,8 +5,6 @@ define(function(require){
 		, Roofs = require('Roofs')
 		, SideViews = require('SideViews');
 
-
-
 	return Backbone.View.extend({
 
 		initialize : function() {	
@@ -29,7 +27,8 @@ define(function(require){
 	        };
 			
 			this.geocoder = new google.maps.Geocoder();
-			this.markers = [];
+			this.markers = []; // collection of markers for list and details view
+			this.marker = null; // for new and edit views
 			this.currentLoc = null;
 			this.currentMarker = null;
 		},
@@ -90,23 +89,33 @@ define(function(require){
 					break;
 				case "new" :
 					this.model = model;
-					this.clearMap();
+					this.hideMarkers();
+					this.clearMarker();
+					if (this.model.get('latitude') || this.model.get('longitude'))
+					{
+						this.marker = new google.maps.Marker({
+							  position : new google.maps.LatLng(this.model.get('latitude'), this.model.get('longitude'))
+							, map : this.map
+							, animation : google.maps.Animation.DROP
+						});
+					}
 					google.maps.event.addListener(this.map, 'click', function(evt){
-						if (self.markers.length > 0)
+						if (self.marker)
 						{
-							self.markers[0].setPosition(evt.latLng);
+							self.marker.setPosition(evt.latLng);
 						}
 						else
 						{
-							self.placeMarker(evt.latLng, {
-								animation : google.maps.Animation.DROP
+							self.marker = new google.maps.Marker({
+								  position : evt.latLng
+								, map : self.map
+								, animation : google.maps.Animation.DROP
 							});
 						}
 						self.updateRoof(evt.latLng);
 					});
 					break;
 				case "details" :
-					
 					if (this.model && this.model.models) // check if model is a collection
 					{
 						var roofs = this.model.where({
@@ -132,7 +141,7 @@ define(function(require){
 					}
 					else if (this.model)
 					{
-						this.clearMap();
+						this.clearMarker();
 					}
 
 					this.model = new Roofs();
@@ -162,6 +171,21 @@ define(function(require){
 				}
 				this.currentMarker = this.markers[index];
 				this.currentMarker.setAnimation(google.maps.Animation.BOUNCE);
+			}
+		},
+		
+		hideMarkers : function() {
+			_.each(this.markers, function(marker){
+				marker.setMap(null);
+			});
+		},
+		
+		clearMarker : function() {
+			if (this.marker)
+			{
+				this.marker.setMap(null);
+				google.maps.event.clearInstanceListeners(this.marker);
+				this.marker = null;
 			}
 		},
 		
