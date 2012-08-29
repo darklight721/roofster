@@ -31,6 +31,8 @@ define(function(require){
 			this.marker = null; // for new and edit views
 			this.currentLoc = null;
 			this.currentMarker = null;
+			this.latLngBounds = null;
+			this.bounds = 0.01;
 		},
 
 		render : function() {
@@ -40,7 +42,6 @@ define(function(require){
 			
 			this.setSize();
 			this.setMap();
-			this.centerCurrentLocation();
 
 			return this;
 		},
@@ -83,21 +84,34 @@ define(function(require){
 			switch (view)
 			{
 				case "list" :
-					this.model = model;
-					this.clearMap();
-					this.fetchRoofs();
+					this.clearEvents();
+					this.clearMarker();
+					if (!this.model)
+					{
+						this.model = model;
+						this.setEvents();
+						this.centerCurrentLocation();
+					}
+					else
+					{
+						this.setEvents();
+						this.toggleMarkers(true);
+					}
 					break;
 				case "new" :
 					this.model = model;
-					this.hideMarkers();
+					this.toggleMarkers(false);
+					this.clearEvents();
 					this.clearMarker();
 					if (this.model.get('latitude') || this.model.get('longitude'))
 					{
+						var position = new google.maps.LatLng(this.model.get('latitude'), this.model.get('longitude'));
 						this.marker = new google.maps.Marker({
-							  position : new google.maps.LatLng(this.model.get('latitude'), this.model.get('longitude'))
+							  position : position
 							, map : this.map
 							, animation : google.maps.Animation.DROP
 						});
+						this.map.panTo(position);
 					}
 					google.maps.event.addListener(this.map, 'click', function(evt){
 						if (self.marker)
@@ -174,10 +188,10 @@ define(function(require){
 			}
 		},
 		
-		hideMarkers : function() {
+		toggleMarkers : function(isShow) {
 			_.each(this.markers, function(marker){
-				marker.setMap(null);
-			});
+				marker.setMap(isShow ? this.map : null);
+			}, this);
 		},
 		
 		clearMarker : function() {
@@ -196,6 +210,17 @@ define(function(require){
 			});
 			this.markers = [];
 			
+			google.maps.event.clearInstanceListeners(this.map);
+		},
+		
+		setEvents : function() {
+			var self = this;
+			google.maps.event.addListener(this.map, 'idle', function(){
+				self.fetchRoofs();
+			});
+		},
+		
+		clearEvents : function() {
 			google.maps.event.clearInstanceListeners(this.map);
 		},
 		
@@ -249,20 +274,57 @@ define(function(require){
 		fetchRoofs : function(callback) {
 			if (!this.model)
 				return;
-				
-			var self = this,
-				centerLoc = this.map.getCenter();
-
-			console.log(this.model.url);
 			
+			var mapBounds = this.map.getBounds();			
+			if (this.latLngBounds)
+			{
+				if (this.latLngBounds.contains(mapBounds.getSouthWest()) && this.latLngBounds.contains(mapBounds.getNorthEast()))
+				{
+					return;
+				}
+			}
+				
+			var bounds_data = {
+				from : {
+					lat : mapBounds.getSouthWest().lat() - this.bounds,
+					lng : mapBounds.getSouthWest().lng() - this.bounds
+				},
+				to : {
+					lat : mapBounds.getNorthEast().lat() + this.bounds,
+					lng : mapBounds.getNorthEast().lng() + this.bounds
+				}
+			};
+			
+			this.latLngBounds = new google.maps.LatLngBounds(
+				new google.maps.LatLng(
+					bounds_data.from.lat,
+					bounds_data.from.lng
+				),
+				new google.maps.LatLng(
+					bounds_data.to.lat,
+					bounds_data.to.lng
+				)
+			);
+			
+			console.log(bounds_data);
+			var self = this;
 			this.model.fetch({
-				  url : self.model.url + '/search/' + centerLoc.lat() + '/' + centerLoc.lng() + '/' + '0.01'
+				  data : bounds_data
 				, success : function(){
 					console.log('fetch collection success');
+					self.clearMarkers();
 					self.placeMarkers();
 					if (callback) callback();
 				}
 			});
+		},
+		
+		clearMarkers : function() {
+			_.each(this.markers, function(marker) {
+				google.maps.event.clearInstanceListeners(marker);
+				marker.setMap(null);
+			});
+			this.markers = [];
 		},
 		
 		placeMarkers : function() {

@@ -15,9 +15,12 @@ define(function(require){
 	var views = {};
 	
 	views[SideViews.LIST] = function(unused) {
-		var roofs = new Roofs();
+		if (!this.roofs)
+		{
+			this.roofs = new Roofs();
+		}
 					
-		this.mapView.prepareFor('list', roofs);
+		this.mapView.prepareFor('list', this.roofs);
 		
 		if (!this.listView)
 		{

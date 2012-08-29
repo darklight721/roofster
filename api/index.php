@@ -16,10 +16,25 @@ $app->delete('/roofs/:id/:email/:passcode', 'deleteRoof');
 $app->run();
 
 function getRoofs() {
-    $sql = "SELECT id, type, address, rate, latitude, longitude, contact_person, contact_number, details, pictures, date_added FROM roof ORDER BY date_added";
+	$request = Slim::getInstance()->request();
+    $bounds = $request->get();
+	$sql = "";
+	if (isset($bounds)) {
+		$sql = "SELECT id, type, address, rate, latitude, longitude, date_added FROM roof where latitude BETWEEN :from_lat AND :to_lat AND longitude BETWEEN :from_lng AND :to_lng ORDER BY date_added";
+	}
+	else {
+		$sql = "SELECT id, type, address, rate, latitude, longitude, date_added FROM roof ORDER BY date_added";
+	}
     try {
         $db = getConnection();
-        $stmt = $db->query($sql);
+        $stmt = $db->prepare($sql);
+		if (isset($bounds)) {
+			$stmt->bindParam("from_lat", $bounds['from']['lat']);
+			$stmt->bindParam("from_lng", $bounds['from']['lng']);
+			$stmt->bindParam("to_lat", $bounds['to']['lat']);
+			$stmt->bindParam("to_lng", $bounds['to']['lng']);
+		}
+		$stmt->execute();
         $roofs = $stmt->fetchAll(PDO::FETCH_OBJ);
         $db = null;
         echo json_encode($roofs);
