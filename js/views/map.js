@@ -5,6 +5,15 @@ define(function(require){
 		, Roofs = require('Roofs')
 		, SideViews = require('SideViews');
 
+	function setMapSize(mapElem) {
+		var height = $(window).innerHeight() - 80;
+		if (height < 600) 
+			height = 600;
+		else if (height > 1000)
+			height = 1000;
+		mapElem.height(height);
+	}
+
 	return Backbone.View.extend({
 
 		initialize : function() {	
@@ -25,12 +34,11 @@ define(function(require){
 			    , panControl : false
 			    , streetViewControl : false
 	        };
-			
 			this.geocoder = new google.maps.Geocoder();
 			this.markers = []; // collection of markers for list and details view
 			this.marker = null; // for new and edit views
-			this.currentLoc = null;
-			this.currentMarker = null;
+			this.selectedMarker = null; // this is the bouncing marker for details view
+			this.currentLoc = null; // stores the returned value of geolocation.getcurrentposition
 			this.latLngBounds = null;
 			this.bounds = 0.01;
 		},
@@ -40,43 +48,11 @@ define(function(require){
 				this.template()
 			);
 			
-			this.setSize();
-			this.setMap();
+			var mapElem = this.$('.map-tile');
+			setMapSize(mapElem);
+			this.map = new google.maps.Map(mapElem[0], this.mapOptions);
 
 			return this;
-		},
-		
-		setSize : function() {
-			var height = $(window).innerHeight() - 80;
-			if (height < 600) 
-				height = 600;
-			else if (height > 1000)
-				height = 1000;
-			this.$('.map-tile').height(height);
-		},
-
-		setMap : function() {
-			this.map = new google.maps.Map(this.$('.map-tile')[0], this.mapOptions);
-		},
-		
-		centerCurrentLocation : function() {
-			if (!this.currentLoc)
-			{
-				if (navigator.geolocation)
-				{
-					var self = this;
-					navigator.geolocation.getCurrentPosition(
-						function(position){
-							self.currentLoc = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
-							self.map.setCenter(self.currentLoc);
-						}
-					);
-				}
-			}
-			else
-			{
-				this.map.setCenter(this.currentLoc);
-			}
 		},
 		
 		prepareFor : function(view, model) {	
@@ -84,35 +60,47 @@ define(function(require){
 			switch (view)
 			{
 				case "list" :
-					this.clearEvents();
-					this.clearMarker();
-					if (!this.model)
+					this.clearMarker(); // clear marker from new/edit view
+					this.clearMapEvents();
+					if (!this.roofs)
 					{
-						this.model = model;
-						this.setEvents();
-						this.centerCurrentLocation();
+						this.roofs = model;
+						this.setMapEvents();
+						this.centerCurrentLocation(function(){
+							self.fetchRoofs();
+						});
 					}
 					else
 					{
-						this.setEvents();
+						this.setMapEvents();
 						this.toggleMarkers(true);
 					}
 					break;
 				case "new" :
-					this.model = model;
-					this.toggleMarkers(false);
-					this.clearEvents();
-					this.clearMarker();
-					if (this.model.get('latitude') || this.model.get('longitude'))
+					this.roof = model;
+
+					this.clearMarker(); // clear marker from new/edit view
+					this.clearMapEvents();
+					this.toggleMarkers(false); // hide markers 
+					
+					// if model has already a latlng, pin that on the map and center it.
+					if (this.roof.get('latitude') || this.roof.get('longitude'))
 					{
-						var position = new google.maps.LatLng(this.model.get('latitude'), this.model.get('longitude'));
+						var position = new google.maps.LatLng(this.roof.get('latitude'), this.roof.get('longitude'));
 						this.marker = new google.maps.Marker({
 							  position : position
 							, map : this.map
 							, animation : google.maps.Animation.DROP
 						});
 						this.map.panTo(position);
+						//this.map.setCenter(position);
 					}
+					else
+					{
+						if (!this.roofs)
+							this.centerCurrentLocation();
+					}
+
 					google.maps.event.addListener(this.map, 'click', function(evt){
 						if (self.marker)
 						{
@@ -130,13 +118,17 @@ define(function(require){
 					});
 					break;
 				case "details" :
-					if (this.model && this.model.models) // check if model is a collection
+					this.clearMarker(); // clear marker from new/edit view
+					this.clearMapEvents();
+
+					// if the passed model is in the collection
+					if (this.roofs)
 					{
-						var roofs = this.model.where({
+						var roof = this.roofs.where({
 							id : model.get('id')
 						});
 
-						if (roofs.length > 0)
+						if (roof.length > 0)
 						{
 							var mapBounds = this.map.getBounds();
 							var latLng = new google.maps.LatLng(
@@ -144,47 +136,78 @@ define(function(require){
 								model.get('longitude')
 							);
 
-							if (!mapBounds.contains(latLng)) 
+							if (mapBounds.contains(latLng)) 
 							{
-								this.map.setCenter(latLng);
+								this.setMapEvents();
+								this.toggleMarkers(true);
+								this.selectMarker(model.get('id'));
+								return;
 							}
-
-							this.animateMarker(model.get('id'));
-							return;
 						}
 					}
-					else if (this.model)
+					else
 					{
-						this.clearMarker();
+						this.roofs = new Roofs();
 					}
 
-					this.model = new Roofs();
+					
+					this.setMapEvents();
 
-					this.map.setCenter(new google.maps.LatLng(
+					//this.map.setCenter(new google.maps.LatLng(
+					this.map.panTo(new google.maps.LatLng(
 						model.get('latitude'),
 						model.get('longitude')
 					));
 
 					this.fetchRoofs(function(){
-						self.animateMarker(model.get('id'));
+						self.selectMarker(model.get('id'));
 					});
 
 					break;
 			}
 		},
 
-		animateMarker : function(modelId) {
-			var ids = this.model.pluck('id');
+		centerCurrentLocation : function(callback) {
+			if (!this.currentLoc)
+			{
+				if (navigator.geolocation)
+				{
+					var self = this;
+					navigator.geolocation.getCurrentPosition(
+						function(position){
+							self.currentLoc = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+							self.map.setCenter(self.currentLoc);
+							if (callback) callback();
+						},
+						function(){
+							if (callback) callback();
+						}
+					);
+				}
+				else
+				{
+					if (callback) callback();
+				}
+			}
+			else
+			{
+				this.map.setCenter(this.currentLoc);
+				if (callback) callback();
+			}
+		},
+
+		selectMarker : function(modelId) {
+			var ids = this.roofs.pluck('id');
 			var index = _.indexOf(ids, modelId);
 
 			if (index > -1)
 			{
-				if (this.currentMarker)
+				if (this.selectedMarker)
 				{
-					this.currentMarker.setAnimation(null);
+					this.selectedMarker.setAnimation(null);
 				}
-				this.currentMarker = this.markers[index];
-				this.currentMarker.setAnimation(google.maps.Animation.BOUNCE);
+				this.selectedMarker = this.markers[index];
+				this.selectedMarker.setAnimation(google.maps.Animation.BOUNCE);
 			}
 		},
 		
@@ -203,53 +226,29 @@ define(function(require){
 			}
 		},
 		
-		clearMap : function() {
-			_.each(this.markers, function(marker) {
-				google.maps.event.clearInstanceListeners(marker);
-				marker.setMap(null);
-			});
-			this.markers = [];
-			
-			google.maps.event.clearInstanceListeners(this.map);
-		},
-		
-		setEvents : function() {
+		setMapEvents : function() {
 			var self = this;
-			google.maps.event.addListener(this.map, 'idle', function(){
+			google.maps.event.addListener(this.map, 'dragend', function(){
 				self.fetchRoofs();
 			});
 		},
 		
-		clearEvents : function() {
+		clearMapEvents : function() {
 			google.maps.event.clearInstanceListeners(this.map);
-		},
-		
-		placeMarker : function(latLng, options) {		
-			var markerOptions = {
-				position : latLng,
-				map : this.map
-			};
-			if (options)
-			{
-				markerOptions = _.extend(markerOptions, options);
-			}
-			
-			var marker = new google.maps.Marker(markerOptions);
-			this.markers.push(marker);
 		},
 		
 		updateRoof : function(latLng) {
 			// save to model
-			if (this.model)
+			if (this.roof)
 			{
-				this.model.set({
+				this.roof.set({
 					latitude : latLng.lat(),
 					longitude : latLng.lng()
 				});
 				
 				var self = this;
 				this.getAddress(latLng, function(address){
-					self.model.set({
+					self.roof.set({
 						address : address
 					});
 				});
@@ -272,7 +271,7 @@ define(function(require){
 		},
 		
 		fetchRoofs : function(callback) {
-			if (!this.model)
+			if (!this.roofs)
 				return;
 			
 			var mapBounds = this.map.getBounds();			
@@ -280,6 +279,7 @@ define(function(require){
 			{
 				if (this.latLngBounds.contains(mapBounds.getSouthWest()) && this.latLngBounds.contains(mapBounds.getNorthEast()))
 				{
+					if (callback) callback();
 					return;
 				}
 			}
@@ -308,7 +308,7 @@ define(function(require){
 			
 			console.log(bounds_data);
 			var self = this;
-			this.model.fetch({
+			this.roofs.fetch({
 				  data : bounds_data
 				, success : function(){
 					console.log('fetch collection success');
@@ -328,19 +328,20 @@ define(function(require){
 		},
 		
 		placeMarkers : function() {
-			_.each(this.model.models, function(roof){
-				this.placeMarker(new google.maps.LatLng(
-					roof.get('latitude'),
-					roof.get('longitude')
-				));
-				var marker = _.last(this.markers);
-				marker.setTitle(roof.get('type'));
+			_.each(this.roofs.models, function(roof){
+				var marker = new google.maps.Marker({
+					  position : new google.maps.LatLng(roof.get('latitude'), roof.get('longitude'))
+					, map : this.map
+					, title : roof.get('type')
+				});
 
 				google.maps.event.addListener(marker, 'click', function(){
 					console.log('marker clicked');
 					//window.app.navigate('roofs/' + roof.get('id'));
 					window.location.href = '#roofs/' + roof.get('id');
 				});
+
+				this.markers.push(marker);
 			}, this);
 		}
 	});
