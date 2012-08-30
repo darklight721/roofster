@@ -20,7 +20,7 @@ define(function(require){
 			this.roofs = new Roofs();
 		}
 					
-		this.mapView.prepareFor('list', this.roofs);
+		this.mapView.prepareFor(SideViews.LIST, this.roofs);
 		
 		if (!this.listView)
 		{
@@ -39,7 +39,7 @@ define(function(require){
 		this.newView.setModel(this.roof);
 		this.assign(this.newView, '.side-div');
 		
-		this.mapView.prepareFor('new', this.roof);
+		this.mapView.prepareFor(SideViews.NEW, this.roof);
 	};
 
 	views[SideViews.DETAILS] = function(modelId) {
@@ -53,13 +53,13 @@ define(function(require){
 				data : self.roof.toJSON()
 			}), '.side-div');
 
-			self.mapView.prepareFor('details', self.roof);
+			self.mapView.prepareFor(SideViews.DETAILS, self.roof);
 		};
 
 		if (this.roof && this.roof.get('id') === modelId)
 		{
 			console.log('add + details');
-			prepareDetails(this.roof);
+			prepareDetails();
 		}
 		else
 		{				
@@ -92,7 +92,7 @@ define(function(require){
 			self.newView.setModel(self.roof);
 			self.assign(self.newView, '.side-div');
 			
-			self.mapView.prepareFor('new', self.roof);
+			self.mapView.prepareFor(SideViews.NEW, self.roof);
 		};
 
 		if (this.roof && this.roof.get('id') === modelId)

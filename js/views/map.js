@@ -14,6 +14,122 @@ define(function(require){
 		mapElem.height(height);
 	}
 
+	var views = {};
+	
+	views[SideViews.LIST] = function(model) {
+		this.clearMarker(); // clear marker from new/edit view
+		this.clearMapEvents();
+
+		if (!this.roofs)
+		{
+			this.roofs = model;
+			this.setMapEvents();
+
+			var self = this;
+			this.centerCurrentLocation(function(){
+				self.fetchRoofs();
+			});
+		}
+		else
+		{
+			this.setMapEvents();
+			this.toggleMarkers(true);
+		}
+	};
+
+	views[SideViews.NEW] = function(model) {
+		if (!model) return;
+		this.roof = model;
+
+		this.clearMarker(); // clear marker from new/edit view
+		this.clearMapEvents();
+		this.toggleMarkers(false); // hide markers 
+		
+		// if model has already a latlng, pin that on the map and center it.
+		if (this.roof.get('latitude') || this.roof.get('longitude'))
+		{
+			var position = new google.maps.LatLng(this.roof.get('latitude'), this.roof.get('longitude'));
+			this.marker = new google.maps.Marker({
+				  position : position
+				, map : this.map
+				, animation : google.maps.Animation.DROP
+			});
+			this.map.panTo(position);
+			//this.map.setCenter(position);
+		}
+		else
+		{
+			if (!this.roofs)
+				this.centerCurrentLocation();
+		}
+
+		var self = this;
+		google.maps.event.addListener(this.map, 'click', function(evt){
+			if (self.marker)
+			{
+				self.marker.setPosition(evt.latLng);
+			}
+			else
+			{
+				self.marker = new google.maps.Marker({
+					  position : evt.latLng
+					, map : self.map
+					, animation : google.maps.Animation.DROP
+				});
+			}
+			self.updateRoof(evt.latLng);
+		});
+	};
+
+	views[SideViews.DETAILS] = function(model) {
+		if (!model) return;
+
+		this.clearMarker(); // clear marker from new/edit view
+		this.clearMapEvents();
+
+		// if the passed model is in the collection
+		if (this.roofs)
+		{
+			var roof = this.roofs.where({
+				id : model.get('id')
+			});
+
+			if (roof.length > 0)
+			{
+				var mapBounds = this.map.getBounds();
+				var latLng = new google.maps.LatLng(
+					model.get('latitude'),
+					model.get('longitude')
+				);
+
+				if (mapBounds.contains(latLng)) 
+				{
+					this.setMapEvents();
+					this.toggleMarkers(true);
+					this.selectMarker(model.get('id'));
+					return;
+				}
+			}
+		}
+		else
+		{
+			this.roofs = new Roofs();
+		}
+		
+		this.setMapEvents();
+
+		//this.map.setCenter(new google.maps.LatLng(
+		this.map.panTo(new google.maps.LatLng(
+			model.get('latitude'),
+			model.get('longitude')
+		));
+
+		var self = this;
+		this.fetchRoofs(function(){
+			self.selectMarker(model.get('id'));
+		});
+	};
+
 	return Backbone.View.extend({
 
 		initialize : function() {	
@@ -56,114 +172,9 @@ define(function(require){
 		},
 		
 		prepareFor : function(view, model) {	
-			var self = this;
-			switch (view)
+			if (views[view])
 			{
-				case "list" :
-					this.clearMarker(); // clear marker from new/edit view
-					this.clearMapEvents();
-					if (!this.roofs)
-					{
-						this.roofs = model;
-						this.setMapEvents();
-						this.centerCurrentLocation(function(){
-							self.fetchRoofs();
-						});
-					}
-					else
-					{
-						this.setMapEvents();
-						this.toggleMarkers(true);
-					}
-					break;
-				case "new" :
-					this.roof = model;
-
-					this.clearMarker(); // clear marker from new/edit view
-					this.clearMapEvents();
-					this.toggleMarkers(false); // hide markers 
-					
-					// if model has already a latlng, pin that on the map and center it.
-					if (this.roof.get('latitude') || this.roof.get('longitude'))
-					{
-						var position = new google.maps.LatLng(this.roof.get('latitude'), this.roof.get('longitude'));
-						this.marker = new google.maps.Marker({
-							  position : position
-							, map : this.map
-							, animation : google.maps.Animation.DROP
-						});
-						this.map.panTo(position);
-						//this.map.setCenter(position);
-					}
-					else
-					{
-						if (!this.roofs)
-							this.centerCurrentLocation();
-					}
-
-					google.maps.event.addListener(this.map, 'click', function(evt){
-						if (self.marker)
-						{
-							self.marker.setPosition(evt.latLng);
-						}
-						else
-						{
-							self.marker = new google.maps.Marker({
-								  position : evt.latLng
-								, map : self.map
-								, animation : google.maps.Animation.DROP
-							});
-						}
-						self.updateRoof(evt.latLng);
-					});
-					break;
-				case "details" :
-					this.clearMarker(); // clear marker from new/edit view
-					this.clearMapEvents();
-
-					// if the passed model is in the collection
-					if (this.roofs)
-					{
-						var roof = this.roofs.where({
-							id : model.get('id')
-						});
-
-						if (roof.length > 0)
-						{
-							var mapBounds = this.map.getBounds();
-							var latLng = new google.maps.LatLng(
-								model.get('latitude'),
-								model.get('longitude')
-							);
-
-							if (mapBounds.contains(latLng)) 
-							{
-								this.setMapEvents();
-								this.toggleMarkers(true);
-								this.selectMarker(model.get('id'));
-								return;
-							}
-						}
-					}
-					else
-					{
-						this.roofs = new Roofs();
-					}
-
-					
-					this.setMapEvents();
-
-					//this.map.setCenter(new google.maps.LatLng(
-					this.map.panTo(new google.maps.LatLng(
-						model.get('latitude'),
-						model.get('longitude')
-					));
-
-					this.fetchRoofs(function(){
-						self.selectMarker(model.get('id'));
-					});
-
-					break;
+				views[view].call(this, model);
 			}
 		},
 
