@@ -12,66 +12,66 @@ define(function(require){
 		, GenericView = require('GenericView')
 		, SideViews = require('SideViews');
 
-	var views = {};
+	// private members
+	var   homeView = null // this is just a reference to backbone view object, this is set when the backbone view is initialized.
+		, views = {};
 	
 	views[SideViews.LIST] = function(unused) {
-		if (!this.roofs)
+		if (!homeView.roofs)
 		{
-			this.roofs = new Roofs();
+			homeView.roofs = new Roofs();
 		}
 					
-		this.mapView.prepareFor(SideViews.LIST, this.roofs);
+		homeView.mapView.prepareFor(SideViews.LIST, homeView.roofs);
 		
-		if (!this.listView)
+		if (!homeView.listView)
 		{
-			this.listView = new ListView();
+			homeView.listView = new ListView();
 		}
-		this.assign(this.listView, '.side-div');
+		homeView.assign(homeView.listView, '.side-div');
 	};
 
 	views[SideViews.NEW] = function(unused) {
-		this.roof = new Roof();
+		homeView.roof = new Roof();
 					
-		if (!this.newView)
+		if (!homeView.newView)
 		{
-			this.newView = new NewView();
+			homeView.newView = new NewView();
 		}
-		this.newView.setModel(this.roof);
-		this.assign(this.newView, '.side-div');
+		homeView.newView.setModel(homeView.roof);
+		homeView.assign(homeView.newView, '.side-div');
 		
-		this.mapView.prepareFor(SideViews.NEW, this.roof);
+		homeView.mapView.prepareFor(SideViews.NEW, homeView.roof);
 	};
 
 	views[SideViews.DETAILS] = function(modelId) {
 		if (!modelId) return;
 
-		var self = this;
-		// helper
 		var prepareDetails = function() {
-			self.assign(new GenericView({
+			homeView.assign(new GenericView({
 				template : Templates.renderDetailsView(),
-				data : self.roof.toJSON()
+				data : homeView.roof.toJSON()
 			}), '.side-div');
 
-			self.mapView.prepareFor(SideViews.DETAILS, self.roof);
+			homeView.mapView.prepareFor(SideViews.DETAILS, homeView.roof);
 		};
 
-		if (this.roof && this.roof.get('id') === modelId)
+		if (homeView.roof && homeView.roof.get('id') === modelId)
 		{
 			console.log('add + details');
 			prepareDetails();
 		}
 		else
 		{				
-			this.roof = new Roof({ id : modelId });
+			homeView.roof = new Roof({ id : modelId });
 				
-			this.roof.fetch({ success : function(model, response){
+			homeView.roof.fetch({ success : function(model, response){
 				if (!response) return;
 
-				if (self.roof.has('pictures'))
+				if (homeView.roof.has('pictures'))
 				{
-					self.roof.set({
-						pictures : JSON.parse(self.roof.get('pictures'))
+					homeView.roof.set({
+						pictures : JSON.parse(homeView.roof.get('pictures'))
 					});
 				}
 				prepareDetails();
@@ -82,35 +82,33 @@ define(function(require){
 	views[SideViews.EDIT] = function(modelId) {
 		if (!modelId) return;
 
-		var self = this;
-
 		var prepareEdit = function() {
-			if (!self.newView)
+			if (!homeView.newView)
 			{
-				self.newView = new NewView();
+				homeView.newView = new NewView();
 			}
-			self.newView.setModel(self.roof);
-			self.assign(self.newView, '.side-div');
+			homeView.newView.setModel(homeView.roof);
+			homeView.assign(homeView.newView, '.side-div');
 			
-			self.mapView.prepareFor(SideViews.NEW, self.roof);
+			homeView.mapView.prepareFor(SideViews.NEW, homeView.roof);
 		};
 
-		if (this.roof && this.roof.get('id') === modelId)
+		if (homeView.roof && homeView.roof.get('id') === modelId)
 		{
 			prepareEdit();
 		}
 		else
 		{
 			console.log(modelId);
-			this.roof = new Roof({ id : modelId });
+			homeView.roof = new Roof({ id : modelId });
 
-			this.roof.fetch({ success : function(model, response){
+			homeView.roof.fetch({ success : function(model, response){
 				if (!response) return;
 
-				if (self.roof.has('pictures'))
+				if (homeView.roof.has('pictures'))
 				{
-					self.roof.set({
-						pictures : JSON.parse(self.roof.get('pictures'))
+					homeView.roof.set({
+						pictures : JSON.parse(homeView.roof.get('pictures'))
 					});
 				}
 				prepareEdit();
@@ -127,6 +125,8 @@ define(function(require){
 			this.template = Templates.renderHomeView();
 			this.mapView = new MapView();
 			this.render();
+			
+			homeView = this;
 		},
 
 		render : function() {
@@ -140,7 +140,7 @@ define(function(require){
 		setSideView : function(sideView, modelId) {
 			if (views[sideView])
 			{
-				views[sideView].call(this, modelId);
+				views[sideView](modelId);
 			}
 		}
 

@@ -1,120 +1,62 @@
 define(function(require){
 	var   Backbone = require('Backbone')
-		, Templates = require('Templates');
+		, Templates = require('Templates')
+		, NewHelper = require('NewHelper');
 
 	require('Bootstrap');
-
-	function showError(elem, errorMsg) {
-		if (!elem) return;
-		elem.parent().addClass('error');
-		elem.tooltip({
-			title : errorMsg
-		});
-	}
-
-	function removeError(elem) {
-		if (!elem) return;
-		elem.parent().removeClass('error');
-		elem.tooltip('destroy');
-	}
-
-	function validatePictures(files) {
-		if (!files || files.length > 3)
-			return false;
-		
-		for (var i = 0; i < files.length; i++)
-		{
-			var file = files[i];
-			
-			if (!file.type.match(/image.*/))
-				return false;
-			
-			if (file.size > 512000)
-				return false;
-		}
-		
-		return true;
-	}
-
-	function uploadPictures(id, files, success, error) {
-		if (!id) return;
-
-		var formData = new FormData();
-			
-		$.each(files, function() {
-			formData.append('pictures[]', this);
-		});
-		
-		$.ajax({
-			url: 'api/upload/' + id,
-			type: 'POST',
-			data: formData,
-			cache: false,
-			contentType: false,
-			processData: false,
-			success: success,
-			error: error
-		});
-	}
-
-	function extractPictureNames(pictures, id) {
-		var names = '';
-		$.each(pictures, function(){
-			names += this.replace('pics/' + id + '/', '') + ' ';
-		});
-		return names;
-	}
+	
+	// private members
+	var newView = null; // this is just a reference to backbone view object, this is set when the backbone view is initialized.
 
 	function checkForErrors(attrs) {
 		var errorFree = true;
-		var errors = this.model.validateAttr(attrs);
+		var errors = newView.model.validateAttr(attrs);
 		_.each(errors, function(value, key){
 			if (value)
 			{
 				errorFree = false;
-				showError(
-					this.$('#' + key),
+				NewHelper.showError(
+					newView.$('#' + key),
 					value
 				);
 			}
-		}, this);
+		});
 		return errorFree;
 	}
 
 	function saveRoof_success(response) {
 		if (response === 'error')
 		{
-			saveRoof_error.call(this);
+			saveRoof_error();
 		}
 		else
 		{
 			console.log('save success');
-			var files = this.$('#pictures')[0].files;
-			if (files.length > 0 || (this.model.has('pictures') && this.$('#picture_names').val() === ''))
+			var files = newView.$('#pictures')[0].files;
+			if (files.length > 0 || (newView.model.has('pictures') && newView.$('#picture_names').val() === ''))
 			{
 				console.log('uploading pictures');
-				var self = this;
-				uploadPictures(
-					  this.model.get('id')
+				NewHelper.uploadPictures(
+					  newView.model.get('id')
 					, files
 					, function(response) {
-						uploadPictures_success.call(self, response);
+						uploadPictures_success(response);
 					  }
 					, function() {
-						uploadPictures_error.call(self);
+						uploadPictures_error();
 					  }
 				);
 			}
 			else
 			{
 				console.log('no pictures');
-				window.location.href = '#roofs/' + this.model.get('id');
+				window.location.href = '#roofs/' + newView.model.get('id');
 			}
 		}
 	}
 
 	function saveRoof_error() {
-		var elem = this.$('#save');
+		var elem = newView.$('#save');
 		// set button state
 		elem.button('reset');
         elem.popover({
@@ -129,16 +71,16 @@ define(function(require){
 		console.log(response);
 		if (response !== 'error')
 		{
-			this.model.set({
+			newView.model.set({
 				pictures : JSON.parse(response)
 			}, { silent : true });
 		}
 		//alert('Success');
-		window.location.href = '#roofs/' + this.model.get('id');
+		window.location.href = '#roofs/' + newView.model.get('id');
 	}
 
 	function uploadPictures_error() {
-		var elem = this.$('#save');
+		var elem = newView.$('#save');
 		// set button state
 		elem.button('reset');
         elem.popover({
@@ -153,7 +95,7 @@ define(function(require){
 		console.log(response);
 		if (response === 0)
 		{
-			deleteRoof_error.call(this);
+			deleteRoof_error();
 		}
 		else
 		{
@@ -162,7 +104,7 @@ define(function(require){
 	}
 
 	function deleteRoof_error() {
-		var elem = this.$('#remove');
+		var elem = newView.$('#remove');
 		// set button state
 		elem.button('reset');
         elem.popover({
@@ -177,7 +119,7 @@ define(function(require){
 
 		initialize : function() {
 			this.template = Templates.renderNewView();
-			//this.render();
+			newView = this;
 		},
 		
 		setModel : function(model) {
@@ -194,7 +136,7 @@ define(function(require){
 					  isRoom : data.type === 'room'
 					, isApartment : data.type === 'apartment'
 					, isHouse : data.type === 'house'
-					, pictureNames : data.pictures ? extractPictureNames(data.pictures, data.id) : ''
+					, pictureNames : data.pictures ? NewHelper.extractPictureNames(data.pictures, data.id) : ''
 				});
 			}
 
@@ -240,7 +182,7 @@ define(function(require){
 		changePictures : function(evt) {
 			console.log('change pictures');
 			
-			var result = validatePictures(evt.target.files);
+			var result = NewHelper.validatePictures(evt.target.files);
 			if (result)
 			{
 				// display the names
@@ -267,23 +209,23 @@ define(function(require){
 			var error = this.model.validateAttr(attr);
 			if (error[evt.target.id])
 			{
-				showError(
+				NewHelper.showError(
 					this.$('#' + evt.target.id),
 					error[evt.target.id]
 				);
 			}
 			else
 			{
-				removeError(this.$('#' + evt.target.id));
+				NewHelper.removeError(this.$('#' + evt.target.id));
 				if (evt.target.dataset['dependency'])
-					removeError(this.$('#' + evt.target.dataset['dependency']));
+					NewHelper.removeError(this.$('#' + evt.target.dataset['dependency']));
 			}
 		},
 		
 		saveRoof : function() {
 			console.log('save roof');
 
-			var errorFree = checkForErrors.call(this, this.model.toJSON());
+			var errorFree = checkForErrors(this.model.toJSON());
 			if (errorFree)
 			{
 				// set button state
@@ -291,13 +233,12 @@ define(function(require){
 				this.$('#save').popover('destroy');
 				this.$('#remove').popover('destroy');
 
-				var self = this;
 		        this.model.save(null, {
 		            success: function (model, response) {
-						saveRoof_success.call(self, response);
+						saveRoof_success(response);
 		            },
 		            error: function (error) {
-						saveRoof_error.call(self);
+						saveRoof_error();
 		            }
 		        });
 	    	}
@@ -307,7 +248,7 @@ define(function(require){
 			console.log('deleting roof');
 			if (this.model.get('id'))
 			{	
-				var errorFree = checkForErrors.call(this, {
+				var errorFree = checkForErrors({
 					email : this.model.get('email'),
 					passcode : this.model.get('passcode')
 				});
@@ -318,14 +259,13 @@ define(function(require){
 					this.$('#save').popover('destroy');
 					this.$('#remove').popover('destroy');
 					
-					var self = this;
 					this.model.destroy({
 						  url : this.model.url() + '/' + this.model.get('email') + '/' + this.model.get('passcode')
 						, success : function(model, response) {
-							deleteRoof_success.call(this, response);
+							deleteRoof_success(response);
 						  }
 						, error : function() {
-							deleteRoof_error.call(this);
+							deleteRoof_error();
 						}
 					});
 				}
@@ -338,11 +278,11 @@ define(function(require){
 			{
 				var elem = this.$('#address');
 				elem.val(this.model.get('address'));
-				removeError(elem);
+				NewHelper.removeError(elem);
 			}
 			else if (this.model.hasChanged('latitude'))
 			{
-				removeError(this.$('#latitude'));
+				NewHelper.removeError(this.$('#latitude'));
 			}
 		}
 

@@ -23,6 +23,9 @@ require.config({
 		, Templates		: '../tpl/templates'
 		// router
 		, Router		: 'router'
+		// helpers
+		, NewHelper		: 'helpers/newHelper'
+		, MapHelper		: 'helpers/mapHelper'
 	},
 	shim : {
 		'$': {

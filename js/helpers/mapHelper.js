@@ -1,36 +1,47 @@
 
-define(['$'], function($) {
+define(['$', 'exports'], function($, exports) {
 	
 	var   _map = null
-		, _geocoder = new google.maps.Geocoder();
-		, _markers = []; // collection of markers for list and details view
-		, _marker = null; // for new and edit views
-		, _selectedMarker = null; // this is the bouncing marker for details view
+		, _geocoder = new google.maps.Geocoder()
+		, _currentLoc = null
+		, _greaterBounds = null
+		, _markers = [] // collection of markers for list and details view
+		, _marker = null // for new and edit views
+		, _selectedMarker = null // this is the bouncing marker for details view
+		, _isMarkersShown = false;
 
-	function init()
-	{
+	exports.init = function() {
 		_map = null;
+		_currentLoc = null;
+		_greaterBounds = null;
 		_markers = [];
 		_marker = null;
 		_selectedMarker = null;
-	}
+		_isMarkersShown = false;
+	};
 
-	function setMap(map)
-	{
+	exports.setMap = function(map) {
 		_map = map;
-	}
+	};
+	
+	exports.setMapSize = function(mapElem) {
+		var height = $(window).innerHeight() - 80;
+		if (height < 600) 
+			height = 600;
+		else if (height > 1000)
+			height = 1000;
+		mapElem.height(height);
+	};
 
-	function addMarker(model)
-	{
+	exports.addMarker = function(position) {
 		_marker = new google.maps.Marker({
-			  position : new google.maps.LatLng(model.get('latitude'), model.get('longitude'))
+			  position : position
 			, map : _map
 			, animation : google.maps.Animation.DROP
 		});
-	}
+	};
 		
-	function addMarkers(models) 
-	{
+	exports.addMarkers = function(models) {
 		$.each(models, function(){
 			var marker = new google.maps.Marker({
 				  position : new google.maps.LatLng(this.get('latitude'), this.get('longitude'))
@@ -38,56 +49,73 @@ define(['$'], function($) {
 				, title : this.get('type')
 			});
 
+			var self = this;
 			google.maps.event.addListener(marker, 'click', function(){
 				console.log('marker clicked');
-				window.location.href = '#roofs/' + this.get('id');
+				window.location.href = '#roofs/' + self.get('id');
 			});
 
-			_markers.push(this);
+			_markers.push(marker);
+			_isMarkersShown = true;
 		});
-	}
+	};
 
-	function clearMarker() 
-	{
+	exports.clearMarker = function() {
 		if (_marker)
 		{
 			_marker.setMap(null);
 			google.maps.event.clearInstanceListeners(_marker);
 			_marker = null;
 		}
-	}
+	};
 
-	function clearMarkers() 
-	{
+	exports.clearMarkers = function() {
 		$.each(_markers, function() {
 			google.maps.event.clearInstanceListeners(this);
 			this.setMap(null);
 		});
 		_markers = [];
-	}
+	};
+	
+	exports.setMarkerPos = function(position) {
+		if (_marker)
+		{
+			_marker.setPosition(position);
+		}
+		else
+		{
+			this.addMarker(position);
+		}
+	};
 
-	function selectMarker(index)
-	{
+	exports.selectMarker = function(index) {
+		console.log(index);
 		if (index > -1)
 		{
-			if (_selectedMarker)
-			{
-				_selectedMarker.setAnimation(null);
-			}
+			this.removeSelectedMarker();
 			_selectedMarker = _markers[index];
 			_selectedMarker.setAnimation(google.maps.Animation.BOUNCE);
 		}
-	}
+	};
+	
+	exports.removeSelectedMarker = function() {
+		if (_selectedMarker)
+		{
+			_selectedMarker.setAnimation(null);
+		}
+	};
 
-	function toggleMarkers(isShow) 
-	{
+	exports.toggleMarkers = function(isShow) {
+		if (_isMarkersShown === isShow) return;
+		
 		$.each(_markers, function(){
 			this.setMap(isShow ? _map : null);
 		});
-	}
+		
+		_isMarkersShown = isShow;
+	};
 
-	function getAddress(latLng, callback) 
-	{
+	exports.getAddress = function(latLng, callback) {
 		_geocoder.geocode(
 			{ 'latLng' : latLng },
 			function(results, status) {
@@ -100,18 +128,60 @@ define(['$'], function($) {
 				}
 			}
 		);
-	}
-
-	return {
-		  init : init
-		, setMap : setMap
-		, addMarker : addMarker
-		, addMarkers : addMarkers
-		, clearMarker : clearMarker
-		, clearMarkers : clearMarkers
-		, selectMarker : selectMarker
-		, toggleMarkers : toggleMarkers
-		, findAddress : findAddress
+	};
+	
+	exports.centerCurrentLocation = function(callback) {
+		if (!_currentLoc)
+		{
+			if (navigator.geolocation)
+			{
+				var self = this;
+				navigator.geolocation.getCurrentPosition(
+					function(position){
+						_currentLoc = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+						_map.setCenter(_currentLoc);
+						if (callback) callback();
+					},
+					function(){
+						if (callback) callback();
+					}
+				);
+			}
+			else
+			{
+				if (callback) callback();
+			}
+		}
+		else
+		{
+			_map.setCenter(_currentLoc);
+			if (callback) callback();
+		}
+	};
+	
+	exports.setGreaterBounds = function(bounds) {
+		_greaterBounds = new google.maps.LatLngBounds(
+			new google.maps.LatLng(
+				bounds.from.lat,
+				bounds.from.lng
+			),
+			new google.maps.LatLng(
+				bounds.to.lat,
+				bounds.to.lng
+			)
+		);
+	};
+	
+	exports.isMapInBounds = function(mapBounds) {
+		var ret = false;
+		if (_greaterBounds && mapBounds)
+		{
+			if (_greaterBounds.contains(mapBounds.getSouthWest()) && _greaterBounds.contains(mapBounds.getNorthEast()))
+			{
+				ret = true;
+			}
+		}
+		return ret;
 	};
 
 });
