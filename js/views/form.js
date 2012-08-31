@@ -6,17 +6,17 @@ define(function(require){
 	require('Bootstrap');
 	
 	// private members
-	var newView = null; // this is just a reference to backbone view object, this is set when the backbone view is initialized.
+	var formView = null; // this is just a reference to backbone view object, this is set when the backbone view is initialized.
 
 	function checkForErrors(attrs) {
 		var errorFree = true;
-		var errors = newView.model.validateAttr(attrs);
+		var errors = formView.model.validateAttr(attrs);
 		_.each(errors, function(value, key){
 			if (value)
 			{
 				errorFree = false;
 				NewHelper.showError(
-					newView.$('#' + key),
+					formView.$('#' + key),
 					value
 				);
 			}
@@ -32,12 +32,12 @@ define(function(require){
 		else
 		{
 			console.log('save success');
-			var files = newView.$('#pictures')[0].files;
-			if (files.length > 0 || (newView.model.has('pictures') && newView.$('#picture_names').val() === ''))
+			var files = formView.$('#pictures')[0].files;
+			if (files.length > 0 || (formView.model.has('pictures') && formView.$('#picture_names').val() === ''))
 			{
 				console.log('uploading pictures');
 				NewHelper.uploadPictures(
-					  newView.model.get('id')
+					  formView.model.get('id')
 					, files
 					, function(response) {
 						uploadPictures_success(response);
@@ -50,13 +50,13 @@ define(function(require){
 			else
 			{
 				console.log('no pictures');
-				window.location.href = '#roofs/' + newView.model.get('id');
+				window.location.href = '#roofs/' + formView.model.get('id');
 			}
 		}
 	}
 
 	function saveRoof_error() {
-		var elem = newView.$('#save');
+		var elem = formView.$('#save');
 		// set button state
 		elem.button('reset');
         elem.popover({
@@ -71,16 +71,16 @@ define(function(require){
 		console.log(response);
 		if (response !== 'error')
 		{
-			newView.model.set({
+			formView.model.set({
 				pictures : JSON.parse(response)
 			}, { silent : true });
 		}
 		//alert('Success');
-		window.location.href = '#roofs/' + newView.model.get('id');
+		window.location.href = '#roofs/' + formView.model.get('id');
 	}
 
 	function uploadPictures_error() {
-		var elem = newView.$('#save');
+		var elem = formView.$('#save');
 		// set button state
 		elem.button('reset');
         elem.popover({
@@ -104,7 +104,7 @@ define(function(require){
 	}
 
 	function deleteRoof_error() {
-		var elem = newView.$('#remove');
+		var elem = formView.$('#remove');
 		// set button state
 		elem.button('reset');
         elem.popover({
@@ -118,8 +118,8 @@ define(function(require){
 	return Backbone.View.extend({
 
 		initialize : function() {
-			this.template = Templates.renderNewView();
-			newView = this;
+			this.template = Templates.renderFormView();
+			formView = this;
 		},
 		
 		setModel : function(model) {

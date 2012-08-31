@@ -8,7 +8,7 @@ define(function(require){
 		, Templates = require('Templates')
 		, MapView = require('MapView')
 		, ListView = require('ListView')
-		, NewView = require('NewView')
+		, FormView = require('FormView')
 		, GenericView = require('GenericView')
 		, SideViews = require('SideViews');
 
@@ -22,7 +22,7 @@ define(function(require){
 			homeView.roofs = new Roofs();
 		}
 					
-		homeView.mapView.prepareFor(SideViews.LIST, homeView.roofs);
+		homeView.mapView.setMapView(SideViews.LIST, homeView.roofs);
 		
 		if (!homeView.listView)
 		{
@@ -34,14 +34,14 @@ define(function(require){
 	views[SideViews.NEW] = function(unused) {
 		homeView.roof = new Roof();
 					
-		if (!homeView.newView)
+		if (!homeView.formView)
 		{
-			homeView.newView = new NewView();
+			homeView.formView = new FormView();
 		}
-		homeView.newView.setModel(homeView.roof);
-		homeView.assign(homeView.newView, '.side-div');
+		homeView.formView.setModel(homeView.roof);
+		homeView.assign(homeView.formView, '.side-div');
 		
-		homeView.mapView.prepareFor(SideViews.NEW, homeView.roof);
+		homeView.mapView.setMapView(SideViews.NEW, homeView.roof);
 	};
 
 	views[SideViews.DETAILS] = function(modelId) {
@@ -53,7 +53,7 @@ define(function(require){
 				data : homeView.roof.toJSON()
 			}), '.side-div');
 
-			homeView.mapView.prepareFor(SideViews.DETAILS, homeView.roof);
+			homeView.mapView.setMapView(SideViews.DETAILS, homeView.roof);
 		};
 
 		if (homeView.roof && homeView.roof.get('id') === modelId)
@@ -83,14 +83,14 @@ define(function(require){
 		if (!modelId) return;
 
 		var prepareEdit = function() {
-			if (!homeView.newView)
+			if (!homeView.formView)
 			{
-				homeView.newView = new NewView();
+				homeView.formView = new FormView();
 			}
-			homeView.newView.setModel(homeView.roof);
-			homeView.assign(homeView.newView, '.side-div');
+			homeView.formView.setModel(homeView.roof);
+			homeView.assign(homeView.formView, '.side-div');
 			
-			homeView.mapView.prepareFor(SideViews.NEW, homeView.roof);
+			homeView.mapView.setMapView(SideViews.NEW, homeView.roof);
 		};
 
 		if (homeView.roof && homeView.roof.get('id') === modelId)

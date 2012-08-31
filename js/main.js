@@ -18,13 +18,13 @@ require.config({
 		, GenericView	: 'views/generic'
 		, MapView		: 'views/map'
 		, ListView		: 'views/list'
-		, NewView		: 'views/new'
+		, FormView		: 'views/form'
 		, SideViews		: 'views/sideviews'
 		, Templates		: '../tpl/templates'
 		// router
 		, Router		: 'router'
 		// helpers
-		, NewHelper		: 'helpers/newHelper'
+		, NewHelper		: 'helpers/formHelper'
 		, MapHelper		: 'helpers/mapHelper'
 	},
 	shim : {

@@ -1,4 +1,4 @@
-<div class="new">
+<div class="form">
 	<div>
 		<h3>{{#if id}}Edit this Roof{{else}}Add a new Roof{{/if}}</h3>
 		<a class='btn pull-right' href="#"><i class='icon-arrow-left'></i> Back</a>

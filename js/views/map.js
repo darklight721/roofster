@@ -175,7 +175,7 @@ define(function(require){
 			return this;
 		},
 		
-		prepareFor : function(view, model) {	
+		setMapView : function(view, model) {	
 			if (views[view])
 			{
 				views[view](model);

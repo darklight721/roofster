@@ -12,49 +12,49 @@ body {
 	max-width: none;
 }
 
-.new, .details h3 {
+.form, .details h3 {
 	display: inline-block;
 }
 
-.new .label, .details .label {
+.form .label, .details .label {
 	margin-left: 10px;
 }
 
-.new .label-info, .details .label {
+.form .label-info, .details .label {
 	border-bottom-right-radius: 0;
 	border-bottom-left-radius: 0; 
 }
 
-.new .btn.span3, .details .btn.span3 {
+.form .btn.span3, .details .btn.span3 {
 	margin-left: 0;
 	margin-top: 10px;
 }
 
-.new #picture_clear {
+.form #picture_clear {
 	font-size: 10px;
 	margin-left: 5px;
 	cursor: pointer;
 }
 
-.new #picture_clear:hover {
+.form #picture_clear:hover {
 	text-decoration: underline;
 }
 
-.new .btn-group .btn {
+.form .btn-group .btn {
 	margin-bottom: 9px;
 }
 
-.new form .control-group {
+.form form .control-group {
 	margin-bottom: 0px;
 }
 
-.new form legend {
+.form form legend {
 	font-size: 12px;
 	line-height: 16px;
 	margin-bottom: 9px;
 }
 
-.new form legend + .control-group {
+.form form legend + .control-group {
 	margin-top: 0px;
 }
 
