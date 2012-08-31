@@ -75,6 +75,7 @@ define(['$', 'exports'], function($, exports) {
 			this.setMap(null);
 		});
 		_markers = [];
+		_isMarkersShown = false;
 	};
 	
 	exports.setMarkerPos = function(position) {

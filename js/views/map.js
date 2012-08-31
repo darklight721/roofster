@@ -69,6 +69,7 @@ define(function(require){
 		};
 
 		MapHelper.clearMarker(); // clear marker from new/edit view
+		MapHelper.toggleMarkers(true);
 		clearMapEvents();
 
 		// if the passed model is in the collection
@@ -88,7 +89,6 @@ define(function(require){
 
 				if (mapBounds.contains(latLng)) 
 				{
-					MapHelper.toggleMarkers(true);
 					MapHelper.selectMarker(
 						getIndexFromRoofs(model.get('id'))
 					);
