@@ -9,6 +9,16 @@ define(['$', 'Bootstrap', 'exports'], function($, Bootstrap, exports) {
 		});
 	};
 
+	exports.showPopOverError = function(elem, title, content) {
+		elem.button('reset');
+        elem.popover({
+        	  trigger : 'manual'
+        	, title : title
+        	, content : content
+        });
+        elem.popover('show');
+	};
+
 	exports.removeError = function(elem) {
 		if (!elem) return;
 		elem.parent().removeClass('error');

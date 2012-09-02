@@ -24,7 +24,7 @@ require.config({
 		// router
 		, Router		: 'router'
 		// helpers
-		, NewHelper		: 'helpers/formHelper'
+		, FormHelper	: 'helpers/formHelper'
 		, MapHelper		: 'helpers/mapHelper'
 	},
 	shim : {

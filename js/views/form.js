@@ -1,7 +1,7 @@
 define(function(require){
 	var   Backbone = require('Backbone')
 		, Templates = require('Templates')
-		, NewHelper = require('NewHelper');
+		, FormHelper = require('FormHelper');
 
 	require('Bootstrap');
 	
@@ -15,7 +15,7 @@ define(function(require){
 			if (value)
 			{
 				errorFree = false;
-				NewHelper.showError(
+				FormHelper.showError(
 					formView.$('#' + key),
 					value
 				);
@@ -32,11 +32,12 @@ define(function(require){
 		else
 		{
 			console.log('save success');
+
 			var files = formView.$('#pictures')[0].files;
 			if (files.length > 0 || (formView.model.has('pictures') && formView.$('#picture_names').val() === ''))
 			{
 				console.log('uploading pictures');
-				NewHelper.uploadPictures(
+				FormHelper.uploadPictures(
 					  formView.model.get('id')
 					, files
 					, function(response) {
@@ -56,20 +57,16 @@ define(function(require){
 	}
 
 	function saveRoof_error() {
-		var elem = formView.$('#save');
-		// set button state
-		elem.button('reset');
-        elem.popover({
-        	  trigger : 'manual'
-        	, title : 'Error Saving Roof <button class="close" type="button" onclick=\'$("#save").popover("destroy");\'>&times;</button>'
-        	, content : 'Please make sure your email and passcode match the ones you\'ve entered when you created this roof.'
-        });
-        elem.popover('show');
+        FormHelper.showPopOverError(
+        	  formView.$('#save')
+        	, 'Error Saving Roof <button class="close" type="button" onclick=\'$("#save").popover("destroy");\'>&times;</button>'
+        	, 'Please make sure your email and passcode match the ones you\'ve entered when you created this roof.'
+        );
 	}
 
 	function uploadPictures_success(response) {
 		console.log(response);
-		if (response !== 'error')
+		if (response !== 'error' && formView.roof)
 		{
 			formView.model.set({
 				pictures : JSON.parse(response)
@@ -80,15 +77,11 @@ define(function(require){
 	}
 
 	function uploadPictures_error() {
-		var elem = formView.$('#save');
-		// set button state
-		elem.button('reset');
-        elem.popover({
-        	  trigger : 'manual'
-        	, title : 'Error Uploading Pictures <button class="close" type="button" onclick=\'$("#save").popover("destroy");\'>&times;</button>'
-        	, content : 'There was a server error while uploading your pictures. Please try again.'
-        });
-        elem.popover('show');
+		FormHelper.showPopOverError(
+        	  formView.$('#save')
+        	, 'Error Uploading Pictures <button class="close" type="button" onclick=\'$("#save").popover("destroy");\'>&times;</button>'
+        	, 'There was a server error while uploading your pictures. Please try again.'
+        );
 	}
 
 	function deleteRoof_success(response) {
@@ -104,15 +97,11 @@ define(function(require){
 	}
 
 	function deleteRoof_error() {
-		var elem = formView.$('#remove');
-		// set button state
-		elem.button('reset');
-        elem.popover({
-        	  trigger : 'manual'
-        	, title : 'Error Removing Roof <button class="close" type="button" onclick=\'$("#remove").popover("destroy");\'>&times;</button>'
-        	, content : 'Please make sure your email and passcode match the ones you\'ve entered when you created this roof.'
-        });
-        elem.popover('show');
+		FormHelper.showPopOverError(
+        	  formView.$('#remove')
+        	, 'Error Removing Roof <button class="close" type="button" onclick=\'$("#remove").popover("destroy");\'>&times;</button>'
+        	, 'Please make sure your email and passcode match the ones you\'ve entered when you created this roof.'
+        );
 	}
 
 	return Backbone.View.extend({
@@ -124,7 +113,7 @@ define(function(require){
 		
 		setModel : function(model) {
 			this.model = model;
-			this.model.bind('change', this.modelChanged, this);
+			this.model.on('change', this.modelChanged, this);
 		},
 
 		render : function() {
@@ -136,7 +125,7 @@ define(function(require){
 					  isRoom : data.type === 'room'
 					, isApartment : data.type === 'apartment'
 					, isHouse : data.type === 'house'
-					, pictureNames : data.pictures ? NewHelper.extractPictureNames(data.pictures, data.id) : ''
+					, pictureNames : data.pictures ? FormHelper.extractPictureNames(data.pictures, data.id) : ''
 				});
 			}
 
@@ -182,7 +171,7 @@ define(function(require){
 		changePictures : function(evt) {
 			console.log('change pictures');
 			
-			var result = NewHelper.validatePictures(evt.target.files);
+			var result = FormHelper.validatePictures(evt.target.files);
 			if (result)
 			{
 				// display the names
@@ -209,16 +198,16 @@ define(function(require){
 			var error = this.model.validateAttr(attr);
 			if (error[evt.target.id])
 			{
-				NewHelper.showError(
+				FormHelper.showError(
 					this.$('#' + evt.target.id),
 					error[evt.target.id]
 				);
 			}
 			else
 			{
-				NewHelper.removeError(this.$('#' + evt.target.id));
+				FormHelper.removeError(this.$('#' + evt.target.id));
 				if (evt.target.dataset['dependency'])
-					NewHelper.removeError(this.$('#' + evt.target.dataset['dependency']));
+					FormHelper.removeError(this.$('#' + evt.target.dataset['dependency']));
 			}
 		},
 		
@@ -278,11 +267,11 @@ define(function(require){
 			{
 				var elem = this.$('#address');
 				elem.val(this.model.get('address'));
-				NewHelper.removeError(elem);
+				FormHelper.removeError(elem);
 			}
 			else if (this.model.hasChanged('latitude'))
 			{
-				NewHelper.removeError(this.$('#latitude'));
+				FormHelper.removeError(this.$('#latitude'));
 			}
 		}
 

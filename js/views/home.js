@@ -15,7 +15,7 @@ define(function(require){
 	// private members
 	var   homeView = null // this is just a reference to backbone view object, this is set when the backbone view is initialized.
 		, views = {};
-	
+
 	views[SideViews.LIST] = function(unused) {
 		if (!homeView.roofs)
 		{
@@ -47,36 +47,34 @@ define(function(require){
 	views[SideViews.DETAILS] = function(modelId) {
 		if (!modelId) return;
 
-		var prepareDetails = function() {
+		var prepareDetails = function(options) {
 			homeView.assign(new GenericView({
 				template : Templates.renderDetailsView(),
 				data : homeView.roof.toJSON()
 			}), '.side-div');
 
-			homeView.mapView.setMapView(SideViews.DETAILS, homeView.roof);
+			homeView.mapView.setMapView(SideViews.DETAILS, homeView.roof, options);
 		};
 
+		var options = {};
 		if (homeView.roof && homeView.roof.get('id') === modelId)
 		{
-			console.log('add + details');
-			prepareDetails();
+			options.force = true;
 		}
-		else
-		{				
-			homeView.roof = new Roof({ id : modelId });
-				
-			homeView.roof.fetch({ success : function(model, response){
-				if (!response) return;
+		
+		homeView.roof = new Roof({ id : modelId });
+			
+		homeView.roof.fetch({ success : function(model, response){
+			if (!response) return;
 
-				if (homeView.roof.has('pictures'))
-				{
-					homeView.roof.set({
-						pictures : JSON.parse(homeView.roof.get('pictures'))
-					});
-				}
-				prepareDetails();
-			}});
-		}
+			if (homeView.roof.has('pictures'))
+			{
+				homeView.roof.set({
+					pictures : JSON.parse(homeView.roof.get('pictures'))
+				});
+			}
+			prepareDetails(options);
+		}});
 	};
 
 	views[SideViews.EDIT] = function(modelId) {
@@ -98,10 +96,9 @@ define(function(require){
 			prepareEdit();
 		}
 		else
-		{
-			console.log(modelId);
+		{				
 			homeView.roof = new Roof({ id : modelId });
-
+				
 			homeView.roof.fetch({ success : function(model, response){
 				if (!response) return;
 

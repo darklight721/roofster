@@ -31,6 +31,8 @@ define(function(require){
 		{
 			MapHelper.toggleMarkers(true);
 			setMapEvents(SideViews.LIST);
+
+			mapView.fetchRoofs();
 		}
 	};
 
@@ -60,7 +62,7 @@ define(function(require){
 		setMapEvents(SideViews.NEW);
 	};
 
-	views[SideViews.DETAILS] = function(model) {
+	views[SideViews.DETAILS] = function(model, options) {
 		if (!model) return;
 		
 		var getIndexFromRoofs = function(modelId) {
@@ -75,25 +77,25 @@ define(function(require){
 		// if the passed model is in the collection
 		if (mapView.roofs)
 		{
-			var roof = mapView.roofs.where({
-				id : model.get('id')
-			});
-
-			if (roof.length > 0)
+			if (!(options && options.force))
 			{
-				var mapBounds = mapView.map.getBounds();
-				var latLng = new google.maps.LatLng(
-					model.get('latitude'),
-					model.get('longitude')
-				);
-
-				if (mapBounds.contains(latLng)) 
+				var roof = mapView.roofs.get(model.get('id'));
+				if (roof)
 				{
-					MapHelper.selectMarker(
-						getIndexFromRoofs(model.get('id'))
+					var mapBounds = mapView.map.getBounds();
+					var latLng = new google.maps.LatLng(
+						model.get('latitude'),
+						model.get('longitude')
 					);
-					setMapEvents(SideViews.LIST);
-					return;
+
+					if (mapBounds.contains(latLng)) 
+					{
+						MapHelper.selectMarker(
+							getIndexFromRoofs(model.get('id'))
+						);
+						setMapEvents(SideViews.LIST);
+						return;
+					}
 				}
 			}
 		}
@@ -109,7 +111,7 @@ define(function(require){
 			model.get('longitude')
 		));
 
-		mapView.fetchRoofs(function(){
+		mapView.fetchRoofs(options, function(){
 			MapHelper.selectMarker(
 				getIndexFromRoofs(model.get('id'))
 			);
@@ -175,10 +177,10 @@ define(function(require){
 			return this;
 		},
 		
-		setMapView : function(view, model) {	
+		setMapView : function(view, model, options) {	
 			if (views[view])
 			{
-				views[view](model);
+				views[view](model, options);
 			}
 		},
 		
@@ -200,12 +202,12 @@ define(function(require){
 			}
 		},
 		
-		fetchRoofs : function(callback) {
+		fetchRoofs : function(options, callback) {
 			if (!this.roofs)
 				return;
 			
 			var mapBounds = this.map.getBounds();			
-			if (MapHelper.isMapInBounds(mapBounds))
+			if (!(options && options.force) && MapHelper.isMapInBounds(mapBounds))
 			{
 				// no need to fetch roofs if mapbounds is still inside the greater bounds
 				if (callback) callback();
