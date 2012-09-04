@@ -4,7 +4,12 @@ define(['Backbone','Roof'], function(Backbone, Roof){
 
 		model : Roof,
 
-		url : "api/roofs"
+		url : "api/roofs",
+
+		indexOf : function(id) {
+			var ids = this.pluck('id');
+			return _.indexOf(ids, id);
+		}
 		
 	});
 });

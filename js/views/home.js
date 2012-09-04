@@ -14,6 +14,7 @@ define(function(require){
 
 	// private members
 	var   homeView = null // this is just a reference to backbone view object, this is set when the backbone view is initialized.
+		, roofSavedAttr = {} // holds a copy of the saved attributes of a roof
 		, views = {};
 
 	views[SideViews.LIST] = function(unused) {
@@ -27,7 +28,7 @@ define(function(require){
 	};
 
 	views[SideViews.NEW] = function(unused) {
-		homeView.roof = createRoof();
+		createRoof();
 					
 		if (!homeView.formView)
 		{
@@ -54,28 +55,13 @@ define(function(require){
 		
 		if (homeView.roof && homeView.roof.get('id') === modelId)
 		{
-			homeView.roof.set(homeView.roof_attr);
+			homeView.roof.set(roofSavedAttr);
 			prepareDetails();
 		}
 		else
 		{
-			homeView.roof = createRoof({ id : modelId });
-			homeView.roof.fetch({ success : function(model, response){
-				if (!response) return;
-
-				// normalize pictures attribute
-				if (homeView.roof.has('pictures'))
-				{
-					homeView.roof.set({
-						pictures : JSON.parse(homeView.roof.get('pictures'))
-					});
-				}
-				
-				// save orig attributes
-				homeView.roof_attr = homeView.roof.toJSON();
-				
-				prepareDetails();
-			}});
+			createRoof({ id : modelId });
+			fetchRoof(prepareDetails);
 		}
 	};
 
@@ -99,23 +85,8 @@ define(function(require){
 		}
 		else
 		{
-			homeView.roof = createRoof({ id : modelId });
-				
-			homeView.roof.fetch({ success : function(model, response){
-				if (!response) return;
-
-				if (homeView.roof.has('pictures'))
-				{
-					homeView.roof.set({
-						pictures : JSON.parse(homeView.roof.get('pictures'))
-					});
-				}
-				
-				// save orig attributes
-				homeView.roof_attr = homeView.roof.toJSON();
-				
-				prepareEdit();
-			}});
+			createRoof({ id : modelId });
+			fetchRoof(prepareEdit);
 		}
 	};
 	
@@ -128,10 +99,17 @@ define(function(require){
 		homeView.roof = new Roof(attr);
 		
 		homeView.roof.on('saved', function(){
-			var roof = homeView.roofs.get(homeView.roof.get('id'));
+			var id = homeView.roof.get('id'),
+				roof = homeView.roofs.get(id);
+
+			console.log(homeView.roofs.length);
+
 			if (roof)
 			{
-				roof.set(homeView.roof.toJSON());
+				var index = homeView.roofs.indexOf(id);
+
+				homeView.roofs.remove(roof, { at : index });
+				homeView.roofs.add(homeView.roof, { at : index });
 			}
 			else
 			{
@@ -139,7 +117,7 @@ define(function(require){
 			}
 			
 			// save orig attributes
-			homeView.roof_attr = homeView.roof.toJSON();
+			roofSavedAttr = homeView.roof.toJSON();
 		});
 		
 		homeView.roof.on('removed', function(){
@@ -149,6 +127,25 @@ define(function(require){
 		});
 		
 		return homeView.roof;
+	}
+
+	function fetchRoof(callback)
+	{
+		homeView.roof.fetch({ success : function(model, response){
+			if (!response) return;
+
+			if (homeView.roof.has('pictures'))
+			{
+				homeView.roof.set({
+					pictures : JSON.parse(homeView.roof.get('pictures'))
+				});
+			}
+			
+			// save orig attributes
+			roofSavedAttr = homeView.roof.toJSON();
+			
+			if (callback) callback();
+		}});
 	}
 
 	return Backbone.View.extend({

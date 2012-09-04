@@ -62,11 +62,6 @@ define(function(require){
 
 	views[SideViews.DETAILS] = function(model) {
 		if (!model) return;
-		
-		var getIndexFromRoofs = function(modelId) {
-			var ids = mapView.roofs.pluck('id');
-			return _.indexOf(ids, modelId);
-		};
 
 		MapHelper.clearMarker(); // clear marker from new/edit view
 		MapHelper.toggleMarkers(true);
@@ -86,7 +81,7 @@ define(function(require){
 			if (mapBounds.contains(latLng)) 
 			{
 				MapHelper.selectMarker(
-					getIndexFromRoofs(model.get('id'))
+					mapView.roofs.indexOf(model.get('id'))
 				);
 				return;
 			}
@@ -99,7 +94,7 @@ define(function(require){
 
 		mapView.fetchRoofs({ force : true }, function(){
 			MapHelper.selectMarker(
-				getIndexFromRoofs(model.get('id'))
+				mapView.roofs.indexOf(model.get('id'))
 			);
 		});
 	};
@@ -126,29 +121,36 @@ define(function(require){
 		google.maps.event.clearInstanceListeners(mapView.map);
 	}
 
+	function onAddtoRoofs(evt, models, options)
+	{
+		console.log('a roof is added at index ' + options.index);
+		var roof = this.roofs.at(options.index);
+		if (roof)
+		{
+			MapHelper.spliceMarkers(
+				  options.index
+				, 0
+				, roof
+			);
+		}
+	}
+
+	function onRemovefromRoofs(evt, models, options)
+	{
+		console.log(options);
+		console.log('a roof is removed at index ' + options.index);
+		MapHelper.spliceMarkers(
+			  options.at
+			, 1
+		);
+	}
+
 	return Backbone.View.extend({
 
 		initialize : function(options) {
 			this.roofs = options.roofs;
-			this.roofs.on('add', function(evt, model, options){
-				console.log('a roof is added.');
-				var roof = this.roofs.at(options.index);
-				if (roof)
-				{
-					MapHelper.spliceMarkers(
-						  options.index
-						, 0
-						, roof
-					);
-				}
-			}, this);
-			this.roofs.on('remove', function(){
-				console.log('a roof is removed.');
-				MapHelper.spliceMarkers(
-					  options.index
-					, 1
-				);
-			}, this);
+			this.roofs.on('add', onAddtoRoofs, this);
+			this.roofs.on('remove', onRemovefromRoofs, this);
 			
 			this.template = Templates.renderMapView();		
 			this.mapOptions = {

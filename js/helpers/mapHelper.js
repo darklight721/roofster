@@ -10,16 +10,6 @@ define(['$', 'exports'], function($, exports) {
 		, _selectedMarker = null // this is the bouncing marker for details view
 		, _isMarkersShown = false;
 
-	exports.init = function() {
-		_map = null;
-		_currentLoc = null;
-		_greaterBounds = null;
-		_markers = [];
-		_marker = null;
-		_selectedMarker = null;
-		_isMarkersShown = false;
-	};
-	
 	function createMarker(model)
 	{
 		var marker = new google.maps.Marker({
@@ -42,9 +32,18 @@ define(['$', 'exports'], function($, exports) {
 		{
 			marker.setMap(null);
 			google.maps.event.clearInstanceListeners(marker);
-			marker = null;
 		}
 	}
+
+	exports.init = function() {
+		_map = null;
+		_currentLoc = null;
+		_greaterBounds = null;
+		_markers = [];
+		_marker = null;
+		_selectedMarker = null;
+		_isMarkersShown = false;
+	};
 
 	exports.setMap = function(map) {
 		_map = map;
@@ -75,17 +74,21 @@ define(['$', 'exports'], function($, exports) {
 	};
 	
 	exports.spliceMarkers = function(index, deleteCount, model) {
-		var marker = null;
 		if (deleteCount)
+		{
 			removeMarker(_markers[index]);
+			_markers.splice(index, deleteCount);
+		}
 		else
-			marker = createMarker(model);
-		
-		_markers.splice(index, deleteCount, marker);
+		{
+			var marker = createMarker(model);
+			_markers.splice(index, deleteCount, marker);
+		}
 	};
 
 	exports.clearMarker = function() {
 		removeMarker(_marker);
+		_marker = null;
 	};
 
 	exports.clearMarkers = function() {
