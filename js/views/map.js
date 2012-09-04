@@ -16,23 +16,20 @@ define(function(require){
 	views[SideViews.LIST] = function(model) {
 		MapHelper.clearMarker(); // clear marker from new/edit view
 		MapHelper.removeSelectedMarker(); // clear selected marker from details view
+		MapHelper.toggleMarkers(true);
+		
 		clearMapEvents();
-
-		if (!mapView.roofs)
+		setMapEvents(SideViews.LIST);
+		
+		if (MapHelper.hasGreaterBounds()) // if map's been positioned already
 		{
-			mapView.roofs = model;
-			setMapEvents(SideViews.LIST);
-
-			MapHelper.centerCurrentLocation(function(){
-				mapView.fetchRoofs();
-			});
+			mapView.fetchRoofs();
 		}
 		else
 		{
-			MapHelper.toggleMarkers(true);
-			setMapEvents(SideViews.LIST);
-
-			mapView.fetchRoofs();
+			MapHelper.centerCurrentLocation(function(){
+				mapView.fetchRoofs();
+			});
 		}
 	};
 
@@ -41,8 +38,11 @@ define(function(require){
 		mapView.roof = model;
 
 		MapHelper.clearMarker(); // clear marker from new/edit view
+		MapHelper.removeSelectedMarker();
 		MapHelper.toggleMarkers(false); // hide markers 
+		
 		clearMapEvents();
+		setMapEvents(SideViews.NEW);
 		
 		// if model has already a latlng, pin that on the map and center it.
 		if (mapView.roof.get('latitude') || mapView.roof.get('longitude'))
@@ -54,15 +54,13 @@ define(function(require){
 			MapHelper.addMarker(position);
 			mapView.map.panTo(position);
 		}
-		else if (!mapView.roofs)
+		else if (!MapHelper.hasGreaterBounds())
 		{
 			MapHelper.centerCurrentLocation();
 		}
-
-		setMapEvents(SideViews.NEW);
 	};
 
-	views[SideViews.DETAILS] = function(model, options) {
+	views[SideViews.DETAILS] = function(model) {
 		if (!model) return;
 		
 		var getIndexFromRoofs = function(modelId) {
@@ -72,46 +70,34 @@ define(function(require){
 
 		MapHelper.clearMarker(); // clear marker from new/edit view
 		MapHelper.toggleMarkers(true);
+		
 		clearMapEvents();
+		setMapEvents(SideViews.LIST);
 
 		// if the passed model is in the collection
-		if (mapView.roofs)
+		if (mapView.roofs.get(model.get('id')))
 		{
-			if (!(options && options.force))
-			{
-				var roof = mapView.roofs.get(model.get('id'));
-				if (roof)
-				{
-					var mapBounds = mapView.map.getBounds();
-					var latLng = new google.maps.LatLng(
-						model.get('latitude'),
-						model.get('longitude')
-					);
+			var mapBounds = mapView.map.getBounds();
+			var latLng = new google.maps.LatLng(
+				model.get('latitude'),
+				model.get('longitude')
+			);
 
-					if (mapBounds.contains(latLng)) 
-					{
-						MapHelper.selectMarker(
-							getIndexFromRoofs(model.get('id'))
-						);
-						setMapEvents(SideViews.LIST);
-						return;
-					}
-				}
+			if (mapBounds.contains(latLng)) 
+			{
+				MapHelper.selectMarker(
+					getIndexFromRoofs(model.get('id'))
+				);
+				return;
 			}
 		}
-		else
-		{
-			mapView.roofs = new Roofs();
-		}
-		
-		setMapEvents(SideViews.LIST);
 
 		mapView.map.panTo(new google.maps.LatLng(
 			model.get('latitude'),
 			model.get('longitude')
 		));
 
-		mapView.fetchRoofs(options, function(){
+		mapView.fetchRoofs({ force : true }, function(){
 			MapHelper.selectMarker(
 				getIndexFromRoofs(model.get('id'))
 			);
@@ -142,7 +128,28 @@ define(function(require){
 
 	return Backbone.View.extend({
 
-		initialize : function() {	
+		initialize : function(options) {
+			this.roofs = options.roofs;
+			this.roofs.on('add', function(evt, model, options){
+				console.log('a roof is added.');
+				var roof = this.roofs.at(options.index);
+				if (roof)
+				{
+					MapHelper.spliceMarkers(
+						  options.index
+						, 0
+						, roof
+					);
+				}
+			}, this);
+			this.roofs.on('remove', function(){
+				console.log('a roof is removed.');
+				MapHelper.spliceMarkers(
+					  options.index
+					, 1
+				);
+			}, this);
+			
 			this.template = Templates.renderMapView();		
 			this.mapOptions = {
 	         	  center : new google.maps.LatLng(10.3098, 123.893) // default cebu city
@@ -177,10 +184,10 @@ define(function(require){
 			return this;
 		},
 		
-		setMapView : function(view, model, options) {	
+		setMapView : function(view, model) {	
 			if (views[view])
 			{
-				views[view](model, options);
+				views[view](model);
 			}
 		},
 		

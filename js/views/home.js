@@ -17,22 +17,17 @@ define(function(require){
 		, views = {};
 
 	views[SideViews.LIST] = function(unused) {
-		if (!homeView.roofs)
-		{
-			homeView.roofs = new Roofs();
-		}
-					
-		homeView.mapView.setMapView(SideViews.LIST, homeView.roofs);
-		
 		if (!homeView.listView)
 		{
 			homeView.listView = new ListView();
 		}
 		homeView.assign(homeView.listView, '.side-div');
+		
+		homeView.mapView.setMapView(SideViews.LIST);
 	};
 
 	views[SideViews.NEW] = function(unused) {
-		homeView.roof = new Roof();
+		homeView.roof = createRoof();
 					
 		if (!homeView.formView)
 		{
@@ -46,35 +41,42 @@ define(function(require){
 
 	views[SideViews.DETAILS] = function(modelId) {
 		if (!modelId) return;
-
-		var prepareDetails = function(options) {
+		
+		var prepareDetails = function() {
+			// render view
 			homeView.assign(new GenericView({
 				template : Templates.renderDetailsView(),
 				data : homeView.roof.toJSON()
 			}), '.side-div');
 
-			homeView.mapView.setMapView(SideViews.DETAILS, homeView.roof, options);
+			homeView.mapView.setMapView(SideViews.DETAILS, homeView.roof);
 		};
-
-		var options = {};
+		
 		if (homeView.roof && homeView.roof.get('id') === modelId)
 		{
-			options.force = true;
+			homeView.roof.set(homeView.roof_attr);
+			prepareDetails();
 		}
-		
-		homeView.roof = new Roof({ id : modelId });
-			
-		homeView.roof.fetch({ success : function(model, response){
-			if (!response) return;
+		else
+		{
+			homeView.roof = createRoof({ id : modelId });
+			homeView.roof.fetch({ success : function(model, response){
+				if (!response) return;
 
-			if (homeView.roof.has('pictures'))
-			{
-				homeView.roof.set({
-					pictures : JSON.parse(homeView.roof.get('pictures'))
-				});
-			}
-			prepareDetails(options);
-		}});
+				// normalize pictures attribute
+				if (homeView.roof.has('pictures'))
+				{
+					homeView.roof.set({
+						pictures : JSON.parse(homeView.roof.get('pictures'))
+					});
+				}
+				
+				// save orig attributes
+				homeView.roof_attr = homeView.roof.toJSON();
+				
+				prepareDetails();
+			}});
+		}
 	};
 
 	views[SideViews.EDIT] = function(modelId) {
@@ -96,8 +98,8 @@ define(function(require){
 			prepareEdit();
 		}
 		else
-		{				
-			homeView.roof = new Roof({ id : modelId });
+		{
+			homeView.roof = createRoof({ id : modelId });
 				
 			homeView.roof.fetch({ success : function(model, response){
 				if (!response) return;
@@ -108,10 +110,46 @@ define(function(require){
 						pictures : JSON.parse(homeView.roof.get('pictures'))
 					});
 				}
+				
+				// save orig attributes
+				homeView.roof_attr = homeView.roof.toJSON();
+				
 				prepareEdit();
 			}});
 		}
 	};
+	
+	function createRoof(attr)
+	{
+		// remove previously attached events
+		if (homeView.roof)
+			homeView.roof.off();
+			
+		homeView.roof = new Roof(attr);
+		
+		homeView.roof.on('saved', function(){
+			var roof = homeView.roofs.get(homeView.roof.get('id'));
+			if (roof)
+			{
+				roof.set(homeView.roof.toJSON());
+			}
+			else
+			{
+				homeView.roofs.unshift(homeView.roof);
+			}
+			
+			// save orig attributes
+			homeView.roof_attr = homeView.roof.toJSON();
+		});
+		
+		homeView.roof.on('removed', function(){
+			homeView.roofs.remove({
+				id : homeView.roof.get('id')
+			});
+		});
+		
+		return homeView.roof;
+	}
 
 	return Backbone.View.extend({
 
@@ -119,10 +157,18 @@ define(function(require){
 
 		initialize : function() {
 			console.log('home initialize');
-			this.template = Templates.renderHomeView();
-			this.mapView = new MapView();
-			this.render();
 			
+			// models
+			this.roof = null;
+			this.roofs = new Roofs();
+			
+			// views
+			this.mapView = new MapView({
+				roofs : this.roofs
+			});
+			this.template = Templates.renderHomeView();
+			this.render();
+
 			homeView = this;
 		},
 

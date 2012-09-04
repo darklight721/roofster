@@ -32,6 +32,7 @@ define(function(require){
 		else
 		{
 			console.log('save success');
+			formView.model.trigger('saved');
 
 			var files = formView.$('#pictures')[0].files;
 			if (files.length > 0 || (formView.model.has('pictures') && formView.$('#picture_names').val() === ''))
@@ -92,6 +93,7 @@ define(function(require){
 		}
 		else
 		{
+			formView.model.trigger('removed');
 			window.location.href = '#';
 		}
 	}

@@ -19,6 +19,32 @@ define(['$', 'exports'], function($, exports) {
 		_selectedMarker = null;
 		_isMarkersShown = false;
 	};
+	
+	function createMarker(model)
+	{
+		var marker = new google.maps.Marker({
+			  position : new google.maps.LatLng(model.get('latitude'), model.get('longitude'))
+			, map : _map
+			, title : model.get('type')
+		});
+
+		google.maps.event.addListener(marker, 'click', function(){
+			console.log('marker clicked');
+			window.location.href = '#roofs/' + model.get('id');
+		});
+		
+		return marker;
+	}
+	
+	function removeMarker(marker)
+	{
+		if (marker)
+		{
+			marker.setMap(null);
+			google.maps.event.clearInstanceListeners(marker);
+			marker = null;
+		}
+	}
 
 	exports.setMap = function(map) {
 		_map = map;
@@ -43,36 +69,28 @@ define(['$', 'exports'], function($, exports) {
 		
 	exports.addMarkers = function(models) {
 		$.each(models, function(){
-			var marker = new google.maps.Marker({
-				  position : new google.maps.LatLng(this.get('latitude'), this.get('longitude'))
-				, map : _map
-				, title : this.get('type')
-			});
-
-			var self = this;
-			google.maps.event.addListener(marker, 'click', function(){
-				console.log('marker clicked');
-				window.location.href = '#roofs/' + self.get('id');
-			});
-
-			_markers.push(marker);
+			_markers.push(createMarker(this));
 			_isMarkersShown = true;
 		});
 	};
+	
+	exports.spliceMarkers = function(index, deleteCount, model) {
+		var marker = null;
+		if (deleteCount)
+			removeMarker(_markers[index]);
+		else
+			marker = createMarker(model);
+		
+		_markers.splice(index, deleteCount, marker);
+	};
 
 	exports.clearMarker = function() {
-		if (_marker)
-		{
-			_marker.setMap(null);
-			google.maps.event.clearInstanceListeners(_marker);
-			_marker = null;
-		}
+		removeMarker(_marker);
 	};
 
 	exports.clearMarkers = function() {
 		$.each(_markers, function() {
-			google.maps.event.clearInstanceListeners(this);
-			this.setMap(null);
+			removeMarker(this);
 		});
 		_markers = [];
 		_isMarkersShown = false;
@@ -183,6 +201,10 @@ define(['$', 'exports'], function($, exports) {
 			}
 		}
 		return ret;
+	};
+	
+	exports.hasGreaterBounds = function() {
+		return (_greaterBounds !== null);
 	};
 
 });
