@@ -102,18 +102,13 @@ define(function(require){
 			var id = homeView.roof.get('id'),
 				roof = homeView.roofs.get(id);
 
-			console.log(homeView.roofs.length);
-
 			if (roof)
 			{
-				var index = homeView.roofs.indexOf(id);
-
-				homeView.roofs.remove(roof, { at : index });
-				homeView.roofs.add(homeView.roof, { at : index });
+				roof.set(homeView.roof.toJSON());
 			}
 			else
 			{
-				homeView.roofs.unshift(homeView.roof);
+				homeView.roofs.push(homeView.roof);
 			}
 			
 			// save orig attributes
@@ -121,9 +116,11 @@ define(function(require){
 		});
 		
 		homeView.roof.on('removed', function(){
-			homeView.roofs.remove({
-				id : homeView.roof.get('id')
-			});
+			var id = homeView.roof.get('id'),
+				roof = homeView.roofs.get(id);
+				
+			roof.trigger('remove');
+			homeView.roofs.remove(roof);
 		});
 		
 		return homeView.roof;

@@ -17,6 +17,7 @@ require.config({
 		, HomeView		: 'views/home'
 		, GenericView	: 'views/generic'
 		, MapView		: 'views/map'
+		, MarkerView	: 'views/marker'
 		, ListView		: 'views/list'
 		, FormView		: 'views/form'
 		, SideViews		: 'views/sideviews'

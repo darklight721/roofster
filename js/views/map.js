@@ -3,6 +3,7 @@ define(function(require){
 	var   Backbone = require('Backbone')
 		, Templates = require('Templates')
 		, Roofs = require('Roofs')
+		, MarkerView = require('MarkerView')
 		, SideViews = require('SideViews')
 		, MapHelper = require('MapHelper');
 
@@ -15,8 +16,8 @@ define(function(require){
 	
 	views[SideViews.LIST] = function(model) {
 		MapHelper.clearMarker(); // clear marker from new/edit view
-		MapHelper.removeSelectedMarker(); // clear selected marker from details view
-		MapHelper.toggleMarkers(true);
+		removeSelectedMarker(); // clear selected marker from details view
+		toggleMarkers(true);
 		
 		clearMapEvents();
 		setMapEvents(SideViews.LIST);
@@ -38,8 +39,8 @@ define(function(require){
 		mapView.roof = model;
 
 		MapHelper.clearMarker(); // clear marker from new/edit view
-		MapHelper.removeSelectedMarker();
-		MapHelper.toggleMarkers(false); // hide markers 
+		removeSelectedMarker();
+		toggleMarkers(false); // hide markers 
 		
 		clearMapEvents();
 		setMapEvents(SideViews.NEW);
@@ -64,7 +65,7 @@ define(function(require){
 		if (!model) return;
 
 		MapHelper.clearMarker(); // clear marker from new/edit view
-		MapHelper.toggleMarkers(true);
+		toggleMarkers(true);
 		
 		clearMapEvents();
 		setMapEvents(SideViews.LIST);
@@ -80,9 +81,7 @@ define(function(require){
 
 			if (mapBounds.contains(latLng)) 
 			{
-				MapHelper.selectMarker(
-					mapView.roofs.indexOf(model.get('id'))
-				);
+				selectMarker(model.get('id'));
 				return;
 			}
 		}
@@ -93,9 +92,7 @@ define(function(require){
 		));
 
 		mapView.fetchRoofs({ force : true }, function(){
-			MapHelper.selectMarker(
-				mapView.roofs.indexOf(model.get('id'))
-			);
+			selectMarker(model.get('id'));
 		});
 	};
 	
@@ -121,28 +118,61 @@ define(function(require){
 		google.maps.event.clearInstanceListeners(mapView.map);
 	}
 
-	function onAddtoRoofs(evt, models, options)
+	function selectMarker(modelId)
 	{
-		console.log('a roof is added at index ' + options.index);
-		var roof = this.roofs.at(options.index);
-		if (roof)
+		removeSelectedMarker();
+		
+		mapView.selectedMarker = _.find(mapView.markerViews, function(markerView){
+			return markerView.model.get('id') === modelId;
+		});
+
+		console.log(mapView.selectedMarker);
+
+		if (mapView.selectedMarker)
 		{
-			MapHelper.spliceMarkers(
-				  options.index
-				, 0
-				, roof
-			);
+			mapView.selectedMarker.select(true);
 		}
 	}
 
-	function onRemovefromRoofs(evt, models, options)
+	function removeSelectedMarker()
 	{
-		console.log(options);
-		console.log('a roof is removed at index ' + options.index);
-		MapHelper.spliceMarkers(
-			  options.at
-			, 1
-		);
+		if (mapView.selectedMarker)
+		{
+			mapView.selectedMarker.select(false);
+			mapView.selectedMarker = null;
+		}
+	}
+
+	function toggleMarkers(isShown)
+	{
+		_.each(mapView.markerViews, function(markerView){
+			markerView.toggle(isShown);
+		});
+	}
+
+	function onAddtoRoofs(evt, models, options)
+	{
+		console.log('a roof is added at index ' + options.index);
+		this.markerViews.push(new MarkerView({
+			model : this.roofs.at(options.index),
+			map : this.map
+		}).render());
+	}
+
+	function onFetchRoofs(evt, models, options)
+	{
+		// remove each marker first
+		_.each(this.markerViews, function(markerView){
+			markerView.remove();
+		});
+
+		this.markerViews = [];
+		_.each(this.roofs.models, function(roof){
+			this.markerViews.push(new MarkerView({
+				model : roof,
+				map : this.map
+			}).render());
+		}, this);
 	}
 
 	return Backbone.View.extend({
@@ -150,7 +180,7 @@ define(function(require){
 		initialize : function(options) {
 			this.roofs = options.roofs;
 			this.roofs.on('add', onAddtoRoofs, this);
-			this.roofs.on('remove', onRemovefromRoofs, this);
+			this.roofs.on('reset', onFetchRoofs, this);
 			
 			this.template = Templates.renderMapView();		
 			this.mapOptions = {
@@ -168,6 +198,8 @@ define(function(require){
 			    , panControl : false
 			    , streetViewControl : false
 	        };
+
+	        this.markerViews = [];
 			
 			MapHelper.init();
 			mapView = this;
@@ -241,8 +273,8 @@ define(function(require){
 				  data : bounds_data
 				, success : function(){
 					console.log('fetch collection success');
-					MapHelper.clearMarkers();
-					MapHelper.addMarkers(self.roofs.models);
+					//MapHelper.clearMarkers();
+					//MapHelper.addMarkers(self.roofs.models);
 					if (callback) callback();
 				}
 			});
