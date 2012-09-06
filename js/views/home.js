@@ -99,8 +99,9 @@ define(function(require){
 		homeView.roof = new Roof(attr);
 		
 		homeView.roof.on('saved', function(){
-			var id = homeView.roof.get('id'),
-				roof = homeView.roofs.get(id);
+			var roof = homeView.roofs.get(
+				homeView.roof.get('id')
+			);
 
 			if (roof)
 			{
@@ -108,7 +109,7 @@ define(function(require){
 			}
 			else
 			{
-				homeView.roofs.push(homeView.roof);
+				homeView.roofs.push(homeView.roof.clone());
 			}
 			
 			// save orig attributes
@@ -116,18 +117,22 @@ define(function(require){
 		});
 		
 		homeView.roof.on('removed', function(){
-			var id = homeView.roof.get('id'),
-				roof = homeView.roofs.get(id);
-				
-			roof.trigger('remove');
-			homeView.roofs.remove(roof);
+			var roof = homeView.roofs.get(
+				homeView.roof.get('id')
+			);
+			
+			if (roof)
+			{
+				roof.trigger('remove');
+				homeView.roofs.remove(roof);
+			}
 		});
-		
-		return homeView.roof;
 	}
 
 	function fetchRoof(callback)
 	{
+		if (!homeView.roof) return;
+		
 		homeView.roof.fetch({ success : function(model, response){
 			if (!response) return;
 

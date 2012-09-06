@@ -5,13 +5,14 @@ define(['Backbone'], function(Backbone){
 	
 		initialize : function(options) {
 			this.map = options.map;
+			this.options = options.options;
 			this.isShown = false;
 			this.isSelected = false;
 			
 			this.marker = new google.maps.Marker({
 				  position : new google.maps.LatLng(
-					this.model.get('latitude'), 
-					this.model.get('longitude')
+					this.model.get('latitude') || 0, 
+					this.model.get('longitude') || 0
 				  )
 				, title : this.model.get('type')
 			});
@@ -47,6 +48,7 @@ define(['Backbone'], function(Backbone){
 		},
 		
 		changePosition : function() {
+			console.log('position changed.');
 			if (!this.marker) return;
 
 			this.marker.setPosition(
@@ -62,17 +64,22 @@ define(['Backbone'], function(Backbone){
 
 			this.toggle(false);
 			google.maps.event.clearInstanceListeners(this.marker);
-			this.marker = null;
+			this.marker = null;		
+			this.map = null;
 		},
 		
 		setMarkerEvent : function() {
 			if (!this.marker) return;
 
 			var self = this;
-			google.maps.event.addListener(this.marker, 'click', function(){
-				console.log('marker clicked');
-				window.location.href = '#roofs/' + self.model.get('id');
-			});
+			
+			if (!(this.options && this.options.noClick))
+			{
+				google.maps.event.addListener(this.marker, 'click', function(){
+					console.log('marker clicked');
+					window.location.href = '#roofs/' + self.model.get('id');
+				});
+			}
 		}
 		
 	});
