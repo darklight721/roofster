@@ -85,11 +85,10 @@ define(function(require){
 			}
 		}
 
-		mapView.map.panTo(roofLoc);
+		MapHelper.setSelectedId(model.get('id'));
 
-		mapView.fetchRoofs({ force : true }, function(){
-			MapHelper.selectMarker(model.get('id'));
-		});
+		mapView.map.panTo(roofLoc);
+		mapView.fetchRoofs({ force : true });
 	};
 	
 	function setMapEvents(view) 
@@ -195,7 +194,7 @@ define(function(require){
 			}
 		},
 		
-		fetchRoofs : function(options, callback) {
+		fetchRoofs : function(options) {
 			if (!this.roofs)
 				return;
 			
@@ -203,7 +202,6 @@ define(function(require){
 			if (!(options && options.force) && MapHelper.isMapInBounds(mapBounds))
 			{
 				// no need to fetch roofs if mapbounds is still inside the greater bounds
-				if (callback) callback();
 				return;
 			}
 				
@@ -225,7 +223,11 @@ define(function(require){
 				  data : bounds_data
 				, success : function(){
 					console.log('fetch collection success');
-					if (callback) callback();
+					var selectedId = MapHelper.getSelectedId();
+					if (selectedId !== -1)
+					{
+						MapHelper.selectMarker(selectedId);
+					}
 				}
 			});
 		}

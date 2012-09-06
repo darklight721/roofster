@@ -7,6 +7,7 @@ define(['MarkerView', 'exports'], function(MarkerView, exports) {
 		, _greaterBounds = null
 		, _movableMarkerView = null // for new and edit views
 		, _markerViews = [] // collection of markers for list and details view
+		, _selectedId = -1
 		, _selectedMarker = null; // this is the bouncing marker for details view
 		
 	function createMarker(model, options)
@@ -34,6 +35,7 @@ define(['MarkerView', 'exports'], function(MarkerView, exports) {
 		this.removeMovableMarker();
 		this.removeMarkers();
 		
+		_selectedId = -1;
 		_selectedMarker = null;	
 	};
 
@@ -77,7 +79,7 @@ define(['MarkerView', 'exports'], function(MarkerView, exports) {
 	};
 	
 	exports.selectMarker = function(modelId) {
-		this.removeSelectedMarker();
+		this.removeSelectedMarker({ keepId : true });
 		
 		_selectedMarker = _.find(_markerViews, function(markerView){
 			return markerView.model.get('id') === modelId;
@@ -86,18 +88,31 @@ define(['MarkerView', 'exports'], function(MarkerView, exports) {
 		if (_selectedMarker)
 		{
 			_selectedMarker.select(true);
+			_selectedId = modelId;
 			return true;
 		}
 		
 		return false;
 	};
 	
-	exports.removeSelectedMarker = function() {
+	exports.removeSelectedMarker = function(options) {
 		if (_selectedMarker)
 		{
 			_selectedMarker.select(false);
 			_selectedMarker = null;
+			if (!(options && options.keepId))
+			{
+				_selectedId = -1;
+			}
 		}
+	};
+
+	exports.getSelectedId = function() {
+		return _selectedId;
+	};
+
+	exports.setSelectedId = function(modelId) {
+		_selectedId = modelId;
 	};
 
 	exports.toggleMarkers = function(isShown) {
