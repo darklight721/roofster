@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: Aug 21, 2012 at 03:50 PM
+-- Generation Time: Sep 07, 2012 at 03:29 PM
 -- Server version: 5.5.25a
 -- PHP Version: 5.4.4
 
@@ -41,17 +41,9 @@ CREATE TABLE IF NOT EXISTS `roof` (
   `email` varchar(128) DEFAULT NULL,
   `passcode` varchar(16) DEFAULT NULL,
   `date_added` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `pictures` text,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=4 ;
-
---
--- Dumping data for table `roof`
---
-
-INSERT INTO `roof` (`id`, `type`, `address`, `city`, `country`, `rate`, `latitude`, `longitude`, `contact_person`, `contact_number`, `details`, `email`, `passcode`, `date_added`) VALUES
-(1, 'room', '', 'Cebu City', 'Philippines', 0, 0, 0, '', '', '', '', '', '2012-08-21 13:02:13'),
-(2, 'room', 'gfs', 'Cebu City', 'Philippines', 543, 0, 0, 'tre', 'tret', 'ytre', 'tre@gfd.com', 'fsddf', '2012-08-21 13:30:32'),
-(3, 'room', 'tret', 'Cebu City', 'Philippines', 54654, 0, 0, 'gfds', 'gfds', 'gfdsgfd', 'tre@fdsgf.vom', 'gfdgfd', '2012-08-21 13:33:41');
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=58 ;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
