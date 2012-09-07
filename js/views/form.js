@@ -25,35 +25,30 @@ define(function(require){
 	}
 
 	function saveRoof_success(response) {
-		if (response === 'error')
+		console.log('save success');
+
+		var files = formView.$('#pictures')[0].files;
+		if (files.length > 0 || (formView.model.has('pictures') && formView.$('#picture_names').val() === ''))
 		{
-			saveRoof_error();
+			console.log('uploading pictures');
+			FormHelper.uploadPictures(
+				  formView.model.get('id')
+				, files
+				, function(response) {
+					uploadPictures_success(response);
+					formView.model.trigger('saved');
+					window.location.href = '#roofs/' + formView.model.get('id');
+				  }
+				, function() {
+					uploadPictures_error();
+				  }
+			);
 		}
 		else
 		{
-			console.log('save success');
+			console.log('no pictures');
 			formView.model.trigger('saved');
-
-			var files = formView.$('#pictures')[0].files;
-			if (files.length > 0 || (formView.model.has('pictures') && formView.$('#picture_names').val() === ''))
-			{
-				console.log('uploading pictures');
-				FormHelper.uploadPictures(
-					  formView.model.get('id')
-					, files
-					, function(response) {
-						uploadPictures_success(response);
-					  }
-					, function() {
-						uploadPictures_error();
-					  }
-				);
-			}
-			else
-			{
-				console.log('no pictures');
-				window.location.href = '#roofs/' + formView.model.get('id');
-			}
+			window.location.href = '#roofs/' + formView.model.get('id');
 		}
 	}
 
@@ -66,15 +61,9 @@ define(function(require){
 	}
 
 	function uploadPictures_success(response) {
-		console.log(response);
-		if (response !== 'error' && formView.roof)
-		{
-			formView.model.set({
-				pictures : JSON.parse(response)
-			}, { silent : true });
-		}
-		//alert('Success');
-		window.location.href = '#roofs/' + formView.model.get('id');
+		formView.model.set({
+			pictures : JSON.parse(response)
+		}, { silent : true });
 	}
 
 	function uploadPictures_error() {
@@ -87,15 +76,8 @@ define(function(require){
 
 	function deleteRoof_success(response) {
 		console.log(response);
-		if (response === 0)
-		{
-			deleteRoof_error();
-		}
-		else
-		{
-			formView.model.trigger('removed');
-			window.location.href = '#';
-		}
+		formView.model.trigger('removed');
+		window.location.href = '#';
 	}
 
 	function deleteRoof_error() {

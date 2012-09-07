@@ -4,26 +4,19 @@ require 'Slim/Slim.php';
 
 $app = new Slim();
 
-$app->get('/roofs', 'getRoofs');
-$app->get('/roofs/:id', 'getRoof');
-$app->get('/roofs/search/:query', 'findByAddress');
-$app->get('/roofs/search/:lat/:lng/:radius', 'findByLatLng');
-$app->post('/roofs', 'addRoof');
-$app->post('/upload/:id', 'uploadPictures');
-$app->put('/roofs/:id', 'updateRoof');
-$app->delete('/roofs/:id/:email/:passcode', 'deleteRoof');
-
-$app->run();
-
-function getRoofs() {
-	$request = Slim::getInstance()->request();
-    $bounds = $request->get();
+$app->get('/roofs', function() use ($app) {
+    $bounds = $app->request()->get();
 	$sql = "";
 	if (isset($bounds)) {
-		$sql = "SELECT id, type, address, rate, latitude, longitude, date_added FROM roof where latitude BETWEEN :from_lat AND :to_lat AND longitude BETWEEN :from_lng AND :to_lng ORDER BY date_added";
+		$sql = "SELECT id, type, address, rate, latitude, longitude, date_added 
+				FROM roof 
+				WHERE latitude BETWEEN :from_lat AND :to_lat AND longitude BETWEEN :from_lng AND :to_lng 
+				ORDER BY date_added";
 	}
 	else {
-		$sql = "SELECT id, type, address, rate, latitude, longitude, date_added FROM roof ORDER BY date_added";
+		$sql = "SELECT id, type, address, rate, latitude, longitude, date_added 
+				FROM roof 
+				ORDER BY date_added";
 	}
     try {
         $db = getConnection();
@@ -41,10 +34,13 @@ function getRoofs() {
     } catch(PDOException $e) {
         echo '{"error":{"text":'. $e->getMessage() .'}}'; 
     }
-}
+});
 
-function getRoof($id) {
-    $sql = "SELECT id, type, address, rate, latitude, longitude, contact_person, contact_number, details, pictures, date_added FROM roof WHERE id=:id";
+$app->get('/roofs/:id', function($id) use ($app) {
+    $sql = "SELECT id, type, address, rate, latitude, longitude, contact_person, 
+    			   contact_number, details, pictures, date_added 
+    		FROM roof 
+    		WHERE id=:id";
     try {
         $db = getConnection();
         $stmt = $db->prepare($sql);
@@ -52,38 +48,24 @@ function getRoof($id) {
         $stmt->execute();
         $roof = $stmt->fetchObject();
         $db = null;
-        echo json_encode($roof);
+        if ($roof) {
+        	echo json_encode($roof);
+        }
+        else {
+        	$app->response()->status(404);
+        	echo 'not found';
+        }
     } catch(PDOException $e) {
         echo '{"error":{"text":'. $e->getMessage() .'}}'; 
     }
-}
+});
 
-function findByLatLng($lat, $lng, $radius) {
-	$sql = "SELECT id, type, address, rate, latitude, longitude, date_added FROM roof where latitude BETWEEN :lat_min AND :lat_max AND longitude BETWEEN :lng_min AND :lng_max ORDER BY date_added";
-	$lat_min = $lat - $radius;
-	$lat_max = $lat + $radius;
-	$lng_min = $lng - $radius;
-	$lng_max = $lng + $radius;
-	try {
-		$db = getConnection();
-		$stmt = $db->prepare($sql);
-		$stmt->bindParam("lat_min", $lat_min);
-		$stmt->bindParam("lat_max", $lat_max);
-		$stmt->bindParam("lng_min", $lng_min);
-		$stmt->bindParam("lng_max", $lng_max);
-		$stmt->execute();
-		$roofs = $stmt->fetchAll(PDO::FETCH_OBJ);
-		$db = null;
-		echo json_encode($roofs);
-	} catch(PDOException $e) {
-        echo '{"error":{"text":'. $e->getMessage() .'}}'; 
-    }
-}
-
-function addRoof() {
-    $request = Slim::getInstance()->request();
-    $roof = json_decode($request->getBody());
-    $sql = "INSERT INTO roof (type, address, city, country, rate, latitude, longitude, contact_person, contact_number, details, email, passcode) VALUES (:type, :address, :city, :country, :rate, :latitude, :longitude, :contact_person, :contact_number, :details, :email, :passcode)";
+$app->post('/roofs', function() use ($app) {
+    $roof = json_decode($app->request()->getBody());
+    $sql = "INSERT INTO roof (type, address, city, country, rate, latitude, longitude, 
+    					contact_person, contact_number, details, email, passcode) 
+    		VALUES (:type, :address, :city, :country, :rate, :latitude, :longitude, 
+    				:contact_person, :contact_number, :details, :email, :passcode)";
     try {
         $db = getConnection();
         $stmt = $db->prepare($sql);
@@ -106,82 +88,9 @@ function addRoof() {
     } catch(PDOException $e) {
         echo '{"error":{"text":'. $e->getMessage() .'}}';
     }
-}
+});
 
-function updateRoof($id) {
-	$ret = "error";
-    $request = Slim::getInstance()->request();
-    $body = $request->getBody();
-    $roof = json_decode($body);
-	$sqlCheck = "SELECT COUNT(*) FROM roof WHERE id=:id and email=:email and passcode=:passcode";
-    $sql = "UPDATE roof SET type=:type, address=:address, city=:city, country=:country, rate=:rate, latitude=:latitude, longitude=:longitude, contact_person=:contact_person, contact_number=:contact_number, details=:details WHERE id=:id and email=:email and passcode=:passcode";
-    try {
-        $db = getConnection();
-        $stmt = $db->prepare($sqlCheck);
-		$stmt->bindParam("id", $id);
-		$stmt->bindParam("email", $roof->email);
-        $stmt->bindParam("passcode", $roof->passcode);
-		$stmt->execute();
-		if ($stmt->fetchColumn() > 0)
-		{
-			$stmt = $db->prepare($sql);
-			$stmt->bindParam("type", $roof->type);
-			$stmt->bindParam("address", $roof->address);
-			$stmt->bindParam("city", $roof->city);
-			$stmt->bindParam("country", $roof->country);
-			$stmt->bindParam("rate", $roof->rate);
-			$stmt->bindParam("latitude", $roof->latitude);
-			$stmt->bindParam("longitude", $roof->longitude);
-			$stmt->bindParam("contact_person", $roof->contact_person);
-			$stmt->bindParam("contact_number", $roof->contact_number);
-			$stmt->bindParam("details", $roof->details);
-			$stmt->bindParam("id", $id);
-			$stmt->bindParam("email", $roof->email);
-			$stmt->bindParam("passcode", $roof->passcode);
-			$stmt->execute();
-			$ret = json_encode($roof);
-		}
-        $db = null;
-        echo $ret;
-    } catch(PDOException $e) {
-        echo '{"error":{"text":'. $e->getMessage() .'}}';
-    }
-}
-
-function deleteRoof($id, $email, $passcode) {
-	$sql = "DELETE FROM roof WHERE id=:id and email=:email and passcode=:passcode";
-	try {
-		$db = getConnection();
-		$stmt = $db->prepare($sql);
-		$stmt->bindParam("id", $id);
-		$stmt->bindParam("email", $email);
-		$stmt->bindParam("passcode", $passcode);
-		$stmt->execute();
-		$count = $stmt->rowCount();
-		$db = null;
-		if ($count > 0)
-			deletePictures("../pics/$id");
-		echo $count;
-	} catch(PDOException $e) {
-		echo '{"error":{"text":'. $e->getMessage() .'}}';
-	}
-}
-
-function findByAddress($query) {
-	echo $query;
-}
-
-function deletePictures($path) {
-	if (is_dir($path)) {
-		foreach (new DirectoryIterator($path) as $file) {
-			if ($file->isFile())
-				unlink($file->getPathname());
-		}
-	}
-}
-
-function uploadPictures($id) {
-	$ret = "error";
+$app->post('/upload/:id', function($id) use ($app) {
 	if (isset($id)) {
 		$path = "../pics/$id";
 
@@ -216,13 +125,97 @@ function uploadPictures($id) {
 				$stmt->bindParam("id", $id);
 				$stmt->execute();
 				$db = null;
-				$ret = $pictureLinks;
+				echo $pictureLinks;
 			} catch(PDOException $e) {
 				echo '{"error":{"text":'. $e->getMessage() .'}}';
 			}
 		}
+		else
+		{
+			$app->response()->status(500);
+			echo 'error';
+		}
 	}
-	echo $ret;
+});
+
+$app->put('/roofs/:id', function($id) use ($app) {
+    $roof = json_decode($app->request()->getBody());
+	$sqlCheck = "SELECT COUNT(id) 
+				 FROM roof 
+				 WHERE id=:id and email=:email and passcode=:passcode";
+    $sql = "UPDATE roof 
+    		SET type=:type, address=:address, city=:city, country=:country, rate=:rate, latitude=:latitude, longitude=:longitude, 
+    			contact_person=:contact_person, contact_number=:contact_number, details=:details 
+    		WHERE id=:id and email=:email and passcode=:passcode";
+    try {
+        $db = getConnection();
+        $stmt = $db->prepare($sqlCheck);
+		$stmt->bindParam("id", $id);
+		$stmt->bindParam("email", $roof->email);
+        $stmt->bindParam("passcode", $roof->passcode);
+		$stmt->execute();
+		if ($stmt->fetchColumn() > 0) {
+			$stmt = $db->prepare($sql);
+			$stmt->bindParam("type", $roof->type);
+			$stmt->bindParam("address", $roof->address);
+			$stmt->bindParam("city", $roof->city);
+			$stmt->bindParam("country", $roof->country);
+			$stmt->bindParam("rate", $roof->rate);
+			$stmt->bindParam("latitude", $roof->latitude);
+			$stmt->bindParam("longitude", $roof->longitude);
+			$stmt->bindParam("contact_person", $roof->contact_person);
+			$stmt->bindParam("contact_number", $roof->contact_number);
+			$stmt->bindParam("details", $roof->details);
+			$stmt->bindParam("id", $id);
+			$stmt->bindParam("email", $roof->email);
+			$stmt->bindParam("passcode", $roof->passcode);
+			$stmt->execute();
+			$db = null;
+			echo json_encode($roof);
+		}
+		else {
+			$db = null;
+			$app->response()->status(405);
+			echo 'mismatched';
+		}
+    } catch(PDOException $e) {
+        echo '{"error":{"text":'. $e->getMessage() .'}}';
+    }
+});
+
+$app->delete('/roofs/:id/:email/:passcode', function($id, $email, $passcode) use ($app) {
+	$sql = "DELETE FROM roof 
+			WHERE id=:id and email=:email and passcode=:passcode";
+	try {
+		$db = getConnection();
+		$stmt = $db->prepare($sql);
+		$stmt->bindParam("id", $id);
+		$stmt->bindParam("email", $email);
+		$stmt->bindParam("passcode", $passcode);
+		$stmt->execute();
+		$count = $stmt->rowCount();
+		$db = null;
+		if ($count > 0) {
+			deletePictures("../pics/$id");
+		}
+		else {
+			$app->response()->status(405);
+			echo 'mismatched';
+		}
+	} catch(PDOException $e) {
+		echo '{"error":{"text":'. $e->getMessage() .'}}';
+	}
+});
+
+$app->run();
+
+function deletePictures($path) {
+	if (is_dir($path)) {
+		foreach (new DirectoryIterator($path) as $file) {
+			if ($file->isFile())
+				unlink($file->getPathname());
+		}
+	}
 }
 
 function getConnection() {
