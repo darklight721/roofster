@@ -15,9 +15,11 @@ define(['Backbone'], function(Backbone){
 					this.model.get('longitude') || 0
 				  )
 				, title : this.model.get('type')
+				, icon : 'img/' + this.model.get('type') + '-marker.png'
 			});
 			
-			this.setMarkerEvent();	
+			this.setMarkerEvent();
+			this.model.on('change:type', this.changeIcon, this);
 			this.model.on('change:latitude change:longitude', this.changePosition, this);
 			this.model.on('remove', this.remove, this);
 		},
@@ -45,6 +47,14 @@ define(['Backbone'], function(Backbone){
 				this.marker.setAnimation(isSelected ? google.maps.Animation.BOUNCE : null);
 				this.isSelected = isSelected;
 			}
+		},
+
+		changeIcon : function() {
+			console.log('type changed');
+			if (!this.marker) return;
+
+			this.marker.setIcon('img/' + this.model.get('type') + '-marker.png');
+			this.marker.setTitle(this.model.get('type'));
 		},
 		
 		changePosition : function() {

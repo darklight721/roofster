@@ -97,7 +97,7 @@ define(function(require){
 		
 		setModel : function(model) {
 			this.model = model;
-			this.model.on('change', this.modelChanged, this);
+			this.model.on('change:address change:latitude change:longitude', this.modelChanged, this);
 		},
 
 		render : function() {
@@ -140,7 +140,7 @@ define(function(require){
 			this.$(evt.target).addClass('active');
 			this.model.set({
 				type : this.$(evt.target).data('type')
-			}, { silent : true });
+			});
 		},
 
 		clearPictures : function() {

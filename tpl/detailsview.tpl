@@ -4,7 +4,7 @@
 	
 	<div class="span3">
 		<span class="label">For Rent</span>
-		<div class="well well-small"><i class="icon-home"></i> <strong>{{type}}</strong></div>
+		<div class="well well-small"><img src="img/{{type}}-icon.png" /><strong>{{type}}</strong></div>
 	</div>
 	
 	<div class="span3">

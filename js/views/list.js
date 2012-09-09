@@ -16,6 +16,9 @@ define(function(require){
 
 			this.model.on('add', this.addItem, this);
 			this.model.on('reset', this.renderItems, this);
+
+			if (this.model.length)
+				this.renderItems();
 		},
 
 		render : function() {

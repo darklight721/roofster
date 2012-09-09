@@ -7,9 +7,9 @@
 		<div class="control-group">
 			<span class="label label-info">For Rent</span>
 			<div class="btn-group" data-toggle="buttons-radio">
-				<button type="button" class="btn type {{#if isRoom}} active {{/if}}" data-type="room">Room</button>
-				<button type="button" class="btn type {{#if isApartment}} active {{/if}}" data-type="apartment">Apartment</button>
-				<button type="button" class="btn type {{#if isHouse}} active {{/if}}" data-type="house">House</button>
+				<button type="button" class="btn type {{#if isRoom}} active {{/if}}" data-type="room"><img src="img/room-icon.png" width="24px"  />Room</button>
+				<button type="button" class="btn type {{#if isApartment}} active {{/if}}" data-type="apartment"><img src="img/apartment-icon.png" width="24px"  />Apartment</button>
+				<button type="button" class="btn type {{#if isHouse}} active {{/if}}" data-type="house"><img src="img/house-icon.png" width="24px"  />House</button>
 			</div>
 		</div>
 		<div class="control-group">
