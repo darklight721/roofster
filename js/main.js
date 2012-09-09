@@ -9,6 +9,7 @@ require.config({
 		, Handlebars	: 'ext/handlebars-1.0.0.beta.6'
 		, text			: 'ext/text'
 		, Bootstrap		: 'ext/bootstrap.min'
+		, moment		: 'ext/moment.min'
 		// models
 		, Roof			: 'models/roof'
 		, Roofs			: 'collections/roofs'
@@ -19,6 +20,7 @@ require.config({
 		, MapView		: 'views/map'
 		, MarkerView	: 'views/marker'
 		, ListView		: 'views/list'
+		, ListItemView	: 'views/listitem'
 		, FormView		: 'views/form'
 		, SideViews		: 'views/sideviews'
 		, Templates		: '../tpl/templates'
@@ -39,8 +41,8 @@ require.config({
 			deps : ['_', '$'],
 			exports : 'Backbone'
 		},
-		'Handlebars': {
-            exports: 'Handlebars'
+		'Handlebars' : {
+            exports : 'Handlebars'
         }
 	}
 });

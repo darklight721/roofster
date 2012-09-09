@@ -8,6 +8,7 @@ define(function(require){
 		, _contactviewtpl = require('text!../tpl/contactview.tpl')
 		, _mapviewtpl = require('text!../tpl/mapview.tpl')
 		, _listviewtpl = require('text!../tpl/listview.tpl')
+		, _listitemviewtpl = require('text!../tpl/listitemview.tpl')
 		, _formviewtpl = require('text!../tpl/formview.tpl')
 		, _detailsviewtpl = require('text!../tpl/detailsview.tpl');
 
@@ -29,6 +30,9 @@ define(function(require){
 		},
 		renderListView : function() {
 			return Handlebars.compile(_listviewtpl);
+		},
+		renderListItemView : function() {
+			return Handlebars.compile(_listitemviewtpl);
 		},
 		renderFormView : function() {
 			return Handlebars.compile(_formviewtpl);

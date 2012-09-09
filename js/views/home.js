@@ -20,7 +20,7 @@ define(function(require){
 	views[SideViews.LIST] = function(unused) {
 		if (!homeView.listView)
 		{
-			homeView.listView = new ListView();
+			homeView.listView = new ListView({ model : homeView.roofs });
 		}
 		homeView.assign(homeView.listView, '.side-div');
 		
