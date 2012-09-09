@@ -9,6 +9,11 @@ define(function(require){
 		initialize : function() {
 			this.template = Templates.renderListView();
 
+			this.listView = new (Backbone.View.extend({
+				tagName : 'ul',
+				className : 'nav nav-tabs nav-stacked'
+			}))();
+
 			this.model.on('add', this.addItem, this);
 			this.model.on('reset', this.renderItems, this);
 		},
@@ -18,25 +23,23 @@ define(function(require){
 				this.template()
 			);
 
-			this.renderItems();
+			this.$('.list-items').html(this.listView.el);
 
 			return this;
 		},
 
 		renderItems : function() {
-			var $listItems = this.$('.list-items');
-
-			$listItems.empty();
+			this.listView.$el.empty();
 			_.each(this.model.models, function(model){
-				$listItems.prepend(new ListItemView({ model : model }).render().el);
-			});
+				this.listView.$el.prepend(new ListItemView({ model : model }).render().el);
+			}, this);
 		},
 
 		addItem : function(evt, models, options) {
 			var model = this.model.at(options.index);
 			if (model)
 			{
-				this.$('.list-items').prepend(new ListItemView({ model : model }).render().el);
+				this.listView.$el.prepend(new ListItemView({ model : model }).render().el);
 			}
 		}
 
