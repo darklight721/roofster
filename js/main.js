@@ -9,7 +9,6 @@ require.config({
 		, Handlebars	: 'ext/handlebars-1.0.0.beta.6'
 		, text			: 'ext/text'
 		, Bootstrap		: 'ext/bootstrap.min'
-		, moment		: 'ext/moment.min'
 		// models
 		, Roof			: 'models/roof'
 		, Roofs			: 'collections/roofs'
@@ -29,6 +28,7 @@ require.config({
 		// helpers
 		, FormHelper	: 'helpers/formHelper'
 		, MapHelper		: 'helpers/mapHelper'
+		, DateHelper	: 'helpers/dateHelper'
 	},
 	shim : {
 		'$': {
