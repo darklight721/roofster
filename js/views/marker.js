@@ -1,5 +1,5 @@
 
-define(['Backbone'], function(Backbone){
+define(['Backbone', 'Templates'], function(Backbone, Templates){
 
 	return Backbone.View.extend({
 	
@@ -8,13 +8,13 @@ define(['Backbone'], function(Backbone){
 			this.options = options.options;
 			this.isShown = false;
 			this.isSelected = false;
+			this.infoTemplate = Templates.renderMarkerInfoView();
 			
 			this.marker = new google.maps.Marker({
 				  position : new google.maps.LatLng(
 					this.model.get('latitude') || 0, 
 					this.model.get('longitude') || 0
 				  )
-				, title : this.model.get('type')
 				, icon : 'img/' + this.model.get('type') + '-marker.png'
 			});
 			
@@ -54,7 +54,6 @@ define(['Backbone'], function(Backbone){
 			if (!this.marker) return;
 
 			this.marker.setIcon('img/' + this.model.get('type') + '-marker.png');
-			this.marker.setTitle(this.model.get('type'));
 		},
 		
 		changePosition : function() {
@@ -88,6 +87,16 @@ define(['Backbone'], function(Backbone){
 				google.maps.event.addListener(this.marker, 'click', function(){
 					console.log('marker clicked');
 					window.location.href = '#roofs/' + self.model.get('id');
+				});
+				
+				var $parent = $('.map-tile');
+				
+				google.maps.event.addListener(this.marker, 'mouseover', function(){
+					$parent.after(self.infoTemplate(self.model.toJSON()));
+				});
+				
+				google.maps.event.addListener(this.marker, 'mouseout', function(){
+					$parent.nextAll().remove();
 				});
 			}
 		}
