@@ -122,18 +122,12 @@ define(function(require){
 		}
 	}
 
-	function onFetchRoofs(evt, models, options)
-	{
-		MapHelper.removeMarkers();
-		MapHelper.pushMarkers(this.roofs.models);
-	}
-
 	return Backbone.View.extend({
 
 		initialize : function(options) {
 			this.roofs = options.roofs;
 			this.roofs.on('add', onAddtoRoofs, this);
-			this.roofs.on('reset', onFetchRoofs, this);
+			this.roofs.on('reset filter', this.renderMarkers, this);
 			
 			this.template = Templates.renderMapView();		
 			this.mapOptions = {
@@ -167,6 +161,11 @@ define(function(require){
 			MapHelper.setMap(this.map);
 			
 			return this;
+		},
+
+		renderMarkers : function() {
+			MapHelper.removeMarkers();
+			MapHelper.pushMarkers(this.roofs.getModels());
 		},
 		
 		setMapView : function(view, model) {	
@@ -230,6 +229,22 @@ define(function(require){
 					}
 				}
 			});
+		},
+
+		events : {
+			  'click button.filter' : 'applyFilter'
+		},
+
+		applyFilter : function(evt) {
+			var $el = this.$(evt.target);
+			$el.toggleClass('active');
+
+			var filters = [];
+			$el.parent().children('button.filter.active').each(function(){
+				filters.push($(this).data('filter'));
+			});
+			
+			this.roofs.setFilter($el.data('attr'), filters);
 		}
 	});
 });

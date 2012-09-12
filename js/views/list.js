@@ -15,7 +15,7 @@ define(function(require){
 			}))();
 
 			this.model.on('add', this.addItem, this);
-			this.model.on('reset', this.renderItems, this);
+			this.model.on('reset filter', this.renderItems, this);
 
 			if (this.model.length)
 				this.renderItems();
@@ -33,7 +33,7 @@ define(function(require){
 
 		renderItems : function() {
 			this.listView.$el.empty();
-			_.each(this.model.models, function(model){
+			_.each(this.model.getModels(), function(model){
 				this.listView.$el.prepend(new ListItemView({ model : model }).render().el);
 			}, this);
 		},

@@ -26,6 +26,19 @@ define(['MarkerView', 'exports'], function(MarkerView, exports) {
 			markerView.remove();
 		}
 	}
+	
+	function geocode(request, callback)
+	{
+		_geocoder.geocode(
+			request,
+			function(results, status) {
+				if (status === google.maps.GeocoderStatus.OK && callback)
+				{
+					callback(results[0]);
+				}
+			}
+		);
+	}
 
 	exports.init = function() {
 		_map = null;
@@ -152,18 +165,27 @@ define(['MarkerView', 'exports'], function(MarkerView, exports) {
 		return (_greaterBounds !== null);
 	};
 	
-	// other helpers
+	// geocoder helpers start here
 
 	exports.getAddress = function(latLng, callback) {
-		_geocoder.geocode(
+		geocode(
 			{ 'latLng' : latLng },
-			function(results, status) {
-				if (status === google.maps.GeocoderStatus.OK) 
+			function(result) {
+				if (result && callback)
 				{
-					if (results[0] && callback) 
-					{
-						callback(results[0].formatted_address);
-					}
+					callback(result.formatted_address);
+				}
+			}
+		);
+	};
+	
+	exports.getLatLngPos = function(address, callback) {
+		geocode(
+			{ 'address' : address },
+			function(result) {
+				if (result && callback)
+				{
+					callback(result.geometry.location);
 				}
 			}
 		);

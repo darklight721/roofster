@@ -3,7 +3,29 @@ body {
     padding-bottom: 10px;
 }
 
-.map-div {
+.map-ctrls *, .list-ctrls button {
+	height: 30px;
+}
+
+.map-ctrls .btn-group, .list-ctrls .btn-group {
+	display: inline-block;
+	margin-left: 0px;
+	margin-right: 5px;
+}
+
+.map-ctrls .btn-group button {
+	padding: 0;
+}
+
+.map-ctrls input[type=search], .list-ctrls button {
+	vertical-align: top;
+}
+
+.map-ctrls input[type=search] {
+	border-radius: 14px;
+}
+
+.map-item {
 	position: relative;
 }
 
