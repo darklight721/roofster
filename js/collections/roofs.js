@@ -64,12 +64,26 @@ define(['Backbone','Roof'], function(Backbone, Roof){
 			return _.indexOf(ids, id);
 		},
 
+		hasFilter : function() {
+			return _.any(this.filters, function(allowedValues){
+				return !_.isEmpty(allowedValues);
+			});
+		},
+
 		setFilter : function(attr, allowedValues) {
 			if (_.isEmpty(this.filters[attr]) && _.isEmpty(allowedValues))
 				return;
 			
 			this.filters[attr] = allowedValues;
 			this.trigger('filter');
+		},
+
+		resetFilter : function() {
+			for (var key in this.filters)
+			{
+				this.filters[key] = null;
+			}
+			this.trigger('filter:reset');
 		},
 
 		getModels : function(sort) {

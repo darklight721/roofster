@@ -109,6 +109,10 @@ define(function(require){
 			}
 			else
 			{
+				if (homeView.roofs.hasFilter())
+				{
+					homeView.roofs.resetFilter();
+				}
 				homeView.roofs.push(homeView.roof.clone());
 			}
 			

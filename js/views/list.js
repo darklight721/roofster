@@ -65,12 +65,23 @@ define(function(require){
 		},
 
 		addItem : function(evt, models, options) {
+			if (this.hasSort())
+			{
+				this.resetSort();
+				this.renderSortCtrl();
+				this.renderItems();
+			}
+
 			var model = this.model.at(options.index);
 			if (model)
 			{
 				this.listView.$el.prepend(new ListItemView({ model : model }).render().el);
 			}
 		},
+
+		hasSort : function() {
+			return (this.sort.attr !== 'date' || this.sort.isAscending);
+		}
 		
 		resetSort : function() {
 			this.sort = { attr : 'date', isAscending : false };

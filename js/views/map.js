@@ -119,16 +119,12 @@ define(function(require){
 	
 	function showFilters()
 	{
-		mapView.$('div.filter-group').show();
+		mapView.$('div.filter-ctrl').show();
 	}
 	
 	function hideFilters()
 	{
-		var $el = mapView.$('div.filter-group');
-		$el.hide();
-		$el.children().removeClass('active');
-		mapView.roofs.setFilter('type', null);
-		mapView.roofs.setFilter('rate', null);
+		mapView.$('div.filter-ctrl').hide();
 	}
 
 	function onAddtoRoofs(evt, models, options)
@@ -141,12 +137,18 @@ define(function(require){
 		}
 	}
 
+	function onResetFilters()
+	{
+		this.$('div.filter-ctrl').children().removeClass('active');
+	}
+
 	return Backbone.View.extend({
 
 		initialize : function(options) {
 			this.roofs = options.roofs;
 			this.roofs.on('add', onAddtoRoofs, this);
 			this.roofs.on('reset filter', this.renderMarkers, this);
+			this.roofs.on('filter:reset', onResetFilters, this);
 			
 			this.template = Templates.renderMapView();		
 			this.mapOptions = {
