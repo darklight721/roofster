@@ -32,6 +32,20 @@ define(['Backbone','Roof'], function(Backbone, Roof){
 			});
 		});
 	};
+	
+	var applySort = {};
+	
+	applySort['date'] = function(models) {
+		return _.sortBy(models || roofs.models, function(model){
+			return model.get('date_added');
+		});
+	};
+	
+	applySort['rate'] = function(models) {
+		return _.sortBy(models || roofs.models, function(model){
+			return parseInt(model.get('rate'), 10);
+		});
+	};
 
 	return Backbone.Collection.extend({
 
@@ -51,23 +65,14 @@ define(['Backbone','Roof'], function(Backbone, Roof){
 		},
 
 		setFilter : function(attr, allowedValues) {
+			if (_.isEmpty(this.filters[attr]) && _.isEmpty(allowedValues))
+				return;
+			
 			this.filters[attr] = allowedValues;
 			this.trigger('filter');
 		},
-		
-		sortByDate : function(models) {
-			return _.sortBy(this.getModels(), function(model){
-				return model.get('date_added');
-			});
-		},
-		
-		sortByRate : function(models) {
-			return _.sortBy(this.getModels(), function(model){
-				return parseInt(model.get('rate'), 10);
-			});
-		},
 
-		getModels : function() {
+		getModels : function(sort) {
 			var models = null;
 			_.each(this.filters, function(allowedValues, attr){
 				if (allowedValues && allowedValues.length > 0 && applyFilter[attr])
@@ -75,6 +80,12 @@ define(['Backbone','Roof'], function(Backbone, Roof){
 					models = applyFilter[attr](allowedValues, models);
 				}
 			}, this);
+			
+			if (sort)
+			{
+				if (sort !== 'date' && applySort[sort])
+					models = applySort[sort](models);
+			}
 
 			return models || this.models;
 		}

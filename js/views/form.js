@@ -105,12 +105,8 @@ define(function(require){
 			if (this.model)
 			{
 				data = this.model.toJSON();
-				data = _.extend(data, {
-					  isRoom : data.type === 'room'
-					, isApartment : data.type === 'apartment'
-					, isHouse : data.type === 'house'
-					, pictureNames : data.pictures ? FormHelper.extractPictureNames(data.pictures, data.id) : ''
-				});
+				data[data.type] = true;
+				data['pictureNames'] = data.pictures ? FormHelper.extractPictureNames(data.pictures, data.id) : '';
 			}
 
 			this.$el.html(

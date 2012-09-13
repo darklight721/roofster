@@ -11,12 +11,12 @@ $app->get('/roofs', function() use ($app) {
 		$sql = "SELECT id, type, address, rate, latitude, longitude, date_added 
 				FROM roof 
 				WHERE latitude BETWEEN :from_lat AND :to_lat AND longitude BETWEEN :from_lng AND :to_lng 
-				ORDER BY date_added";
+				ORDER BY date_added DESC";
 	}
 	else {
 		$sql = "SELECT id, type, address, rate, latitude, longitude, date_added 
 				FROM roof 
-				ORDER BY date_added";
+				ORDER BY date_added DESC";
 	}
     try {
         $db = getConnection();

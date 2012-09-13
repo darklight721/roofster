@@ -11,7 +11,8 @@ define(function(require){
 		, _listviewtpl = require('text!../tpl/listview.tpl')
 		, _listitemviewtpl = require('text!../tpl/listitemview.tpl')
 		, _formviewtpl = require('text!../tpl/formview.tpl')
-		, _detailsviewtpl = require('text!../tpl/detailsview.tpl');
+		, _detailsviewtpl = require('text!../tpl/detailsview.tpl')
+		, _sortctrlviewtpl = require('text!../tpl/sortctrlview.tpl');
 
 	return {
 		renderHeaderView : function() {
@@ -43,6 +44,9 @@ define(function(require){
 		},
 		renderDetailsView : function() {
 			return Handlebars.compile(_detailsviewtpl);
+		},
+		renderSortCtrlView : function() {
+			return Handlebars.compile(_sortctrlviewtpl);
 		}
 	};
 

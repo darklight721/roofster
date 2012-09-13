@@ -14,6 +14,7 @@ define(function(require){
 		, views = {};
 	
 	views[SideViews.LIST] = function(model) {
+		showFilters();
 		MapHelper.removeMovableMarker(); // clear marker from new/edit view
 		MapHelper.removeSelectedMarker(); // clear selected marker from details view
 		MapHelper.toggleMarkers(true);
@@ -37,6 +38,7 @@ define(function(require){
 		if (!model) return;
 		mapView.roof = model;
 
+		hideFilters();
 		MapHelper.removeMovableMarker(); // clear marker from new/edit view
 		MapHelper.removeSelectedMarker(); // clear selected marker from details view
 		MapHelper.toggleMarkers(false); // hide markers from list view
@@ -63,6 +65,7 @@ define(function(require){
 	views[SideViews.DETAILS] = function(model) {
 		if (!model) return;
 
+		showFilters();
 		MapHelper.removeMovableMarker(); // clear marker from new/edit view
 		MapHelper.toggleMarkers(true);
 		
@@ -92,7 +95,7 @@ define(function(require){
 	};
 	
 	function setMapEvents(view) 
-	{
+	{	
 		if (view === SideViews.LIST)
 		{
 			google.maps.event.addListener(mapView.map, 'dragend', function(){
@@ -105,11 +108,27 @@ define(function(require){
 				mapView.updateRoof(evt.latLng);
 			});
 		}
+		
+		mapView.delegateEvents();
 	}
 	
 	function clearMapEvents() 
 	{
 		google.maps.event.clearInstanceListeners(mapView.map);
+	}
+	
+	function showFilters()
+	{
+		mapView.$('div.filter-group').show();
+	}
+	
+	function hideFilters()
+	{
+		var $el = mapView.$('div.filter-group');
+		$el.hide();
+		$el.children().removeClass('active');
+		mapView.roofs.setFilter('type', null);
+		mapView.roofs.setFilter('rate', null);
 	}
 
 	function onAddtoRoofs(evt, models, options)
@@ -232,7 +251,8 @@ define(function(require){
 		},
 
 		events : {
-			  'click button.filter' : 'applyFilter'
+			'click button.filter' : 'applyFilter',
+			'change input.search' : 'searchAddress'
 		},
 
 		applyFilter : function(evt) {
@@ -243,8 +263,23 @@ define(function(require){
 			$el.parent().children('button.filter.active').each(function(){
 				filters.push($(this).data('filter'));
 			});
+			if (filters.length === $el.parent().children('button.filter').length)
+			{
+				filters = [];
+			}
 			
 			this.roofs.setFilter($el.data('attr'), filters);
+		},
+		
+		searchAddress : function(evt) {
+			var self = this;
+			MapHelper.getLatLngPos(evt.target.value, function(position){
+				if (position)
+				{
+					self.map.setCenter(position);
+					self.fetchRoofs();
+				}
+			});
 		}
 	});
 });
