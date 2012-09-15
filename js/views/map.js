@@ -24,12 +24,12 @@ define(function(require){
 		
 		if (MapHelper.hasGreaterBounds()) // if map's been positioned already
 		{
-			mapView.fetchRoofs();
+			fetchRoofs();
 		}
 		else
 		{
 			MapHelper.centerCurrentLocation(function(){
-				mapView.fetchRoofs();
+				fetchRoofs();
 			});
 		}
 	};
@@ -91,7 +91,7 @@ define(function(require){
 		MapHelper.setSelectedId(model.get('id'));
 
 		mapView.map.panTo(roofLoc);
-		mapView.fetchRoofs({ force : true });
+		fetchRoofs({ force : true });
 	};
 	
 	function setMapEvents(view) 
@@ -99,13 +99,13 @@ define(function(require){
 		if (view === SideViews.LIST)
 		{
 			google.maps.event.addListener(mapView.map, 'dragend', function(){
-				mapView.fetchRoofs();
+				fetchRoofs();
 			});
 		}
 		else if (view === SideViews.NEW)
 		{
 			google.maps.event.addListener(mapView.map, 'click', function(evt){
-				mapView.updateRoof(evt.latLng);
+				updateRoof(evt.latLng);
 			});
 		}
 		
@@ -127,28 +127,87 @@ define(function(require){
 		mapView.$('div.filter-ctrl').hide();
 	}
 
-	function onAddtoRoofs(evt, models, options)
+	function updateRoof(latLng) 
+	{
+		// save to model
+		if (mapView.roof)
+		{
+			mapView.roof.set({
+				latitude : latLng.lat(),
+				longitude : latLng.lng()
+			});
+			
+			MapHelper.getAddress(latLng, function(address){
+				mapView.roof.set({
+					address : address
+				});
+			});
+		}
+	}
+	
+	function fetchRoofs(options) 
+	{
+		if (!mapView.roofs)
+			return;
+		
+		var mapBounds = mapView.map.getBounds();			
+		if (!(options && options.force) && MapHelper.isMapInBounds(mapBounds))
+		{
+			// no need to fetch roofs if mapbounds is still inside the greater bounds
+			return;
+		}
+			
+		var bounds_data = {
+			from : {
+				lat : mapBounds.getSouthWest().lat() - BOUNDS,
+				lng : mapBounds.getSouthWest().lng() - BOUNDS
+			},
+			to : {
+				lat : mapBounds.getNorthEast().lat() + BOUNDS,
+				lng : mapBounds.getNorthEast().lng() + BOUNDS
+			}
+		};
+		MapHelper.setGreaterBounds(bounds_data);
+		
+		mapView.roofs.fetch({
+			  data : bounds_data
+			, success : function(){
+				console.log('fetch collection success');
+				var selectedId = MapHelper.getSelectedId();
+				if (selectedId !== -1)
+				{
+					MapHelper.selectMarker(selectedId);
+				}
+			}
+		});
+	}
+
+	function addMarker(evt, models, options)
 	{
 		console.log('a roof is added at index ' + options.index);
-		var roof = this.roofs.at(options.index);
+		var roof = mapView.roofs.at(options.index);
 		if (roof)
 		{
 			MapHelper.pushMarker(roof);
 		}
 	}
 
-	function onResetFilters()
+	function resetFilters()
 	{
-		this.$('div.filter-ctrl').children().removeClass('active');
+		mapView.$('div.filter-ctrl').children().removeClass('active');
+		mapView.renderMarkers();
 	}
 
 	return Backbone.View.extend({
 
 		initialize : function(options) {
+			mapView = this;
+			MapHelper.init();
+
 			this.roofs = options.roofs;
-			this.roofs.on('add', onAddtoRoofs, this);
+			this.roofs.on('add', addMarker);
 			this.roofs.on('reset filter', this.renderMarkers, this);
-			this.roofs.on('filter:reset', onResetFilters, this);
+			this.roofs.on('filter:reset', resetFilters);
 			
 			this.template = Templates.renderMapView();		
 			this.mapOptions = {
@@ -166,9 +225,6 @@ define(function(require){
 			    , panControl : false
 			    , streetViewControl : false
 	        };
-			
-			MapHelper.init();
-			mapView = this;
 		},
 
 		render : function() {
@@ -194,62 +250,6 @@ define(function(require){
 			{
 				views[view](model);
 			}
-		},
-		
-		updateRoof : function(latLng) {
-			// save to model
-			if (this.roof)
-			{
-				this.roof.set({
-					latitude : latLng.lat(),
-					longitude : latLng.lng()
-				});
-				
-				var self = this;
-				MapHelper.getAddress(latLng, function(address){
-					self.roof.set({
-						address : address
-					});
-				});
-			}
-		},
-		
-		fetchRoofs : function(options) {
-			if (!this.roofs)
-				return;
-			
-			var mapBounds = this.map.getBounds();			
-			if (!(options && options.force) && MapHelper.isMapInBounds(mapBounds))
-			{
-				// no need to fetch roofs if mapbounds is still inside the greater bounds
-				return;
-			}
-				
-			var bounds_data = {
-				from : {
-					lat : mapBounds.getSouthWest().lat() - BOUNDS,
-					lng : mapBounds.getSouthWest().lng() - BOUNDS
-				},
-				to : {
-					lat : mapBounds.getNorthEast().lat() + BOUNDS,
-					lng : mapBounds.getNorthEast().lng() + BOUNDS
-				}
-			};
-			MapHelper.setGreaterBounds(bounds_data);
-			
-			console.log(bounds_data);
-			var self = this;
-			this.roofs.fetch({
-				  data : bounds_data
-				, success : function(){
-					console.log('fetch collection success');
-					var selectedId = MapHelper.getSelectedId();
-					if (selectedId !== -1)
-					{
-						MapHelper.selectMarker(selectedId);
-					}
-				}
-			});
 		},
 
 		events : {
@@ -278,8 +278,9 @@ define(function(require){
 			MapHelper.getLatLngPos(evt.target.value, function(position){
 				if (position)
 				{
-					self.map.setCenter(position);
-					self.fetchRoofs();
+					//self.map.setCenter(position);
+					self.map.panTo(position);
+					fetchRoofs();
 				}
 			});
 		}

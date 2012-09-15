@@ -54,9 +54,8 @@ define(['Backbone','Roof'], function(Backbone, Roof){
 		url : "api/roofs",
 
 		initialize : function() {
-			this.filters = {};
-
 			roofs = this;
+			this.filters = {};
 		},
 
 		indexOf : function(id) {
@@ -89,11 +88,11 @@ define(['Backbone','Roof'], function(Backbone, Roof){
 		getModels : function(sort) {
 			var models = null;
 			_.each(this.filters, function(allowedValues, attr){
-				if (allowedValues && allowedValues.length > 0 && applyFilter[attr])
+				if (!_.isEmpty(allowedValues) && applyFilter[attr])
 				{
 					models = applyFilter[attr](allowedValues, models);
 				}
-			}, this);
+			});
 			
 			if (sort)
 			{

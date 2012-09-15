@@ -30,7 +30,7 @@
 	{{#if details}}
 	<div class="span3">
 		<span class="label">Other Details</span>
-		<div class="well well-small"><i class="icon-list"></i> {{details}}</div>
+		<div class="well well-small"><i class="icon-list"></i> {{{details}}}</div>
 	</div>
 	{{/if}}
 	

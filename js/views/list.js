@@ -81,7 +81,7 @@ define(function(require){
 
 		hasSort : function() {
 			return (this.sort.attr !== 'date' || this.sort.isAscending);
-		}
+		},
 		
 		resetSort : function() {
 			this.sort = { attr : 'date', isAscending : false };

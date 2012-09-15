@@ -44,10 +44,16 @@ define(function(require){
 		if (!modelId) return;
 		
 		var prepareDetails = function() {
+			console.log(homeView.roof.get('details'));
 			// render view
+			var data = homeView.roof.toJSON();
+			if (homeView.roof.get('details'))
+			{
+				data.details = data.details.replace(/\n/g,'<br />');
+			}
 			homeView.assign(new GenericView({
 				template : Templates.renderDetailsView(),
-				data : homeView.roof.toJSON()
+				data : data
 			}), '.side-div');
 
 			homeView.mapView.setMapView(SideViews.DETAILS, homeView.roof);
@@ -113,7 +119,7 @@ define(function(require){
 				{
 					homeView.roofs.resetFilter();
 				}
-				homeView.roofs.push(homeView.roof.clone());
+				homeView.roofs.push(homeView.roof);
 			}
 			
 			// save orig attributes
@@ -160,6 +166,7 @@ define(function(require){
 
 		initialize : function() {
 			console.log('home initialize');
+			homeView = this;
 			
 			// models
 			this.roof = null;
@@ -171,8 +178,6 @@ define(function(require){
 			});
 			this.template = Templates.renderHomeView();
 			this.render();
-
-			homeView = this;
 		},
 
 		render : function() {

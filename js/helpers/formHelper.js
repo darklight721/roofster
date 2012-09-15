@@ -10,6 +10,7 @@ define(['$', 'Bootstrap', 'exports'], function($, Bootstrap, exports) {
 	};
 
 	exports.showPopOverError = function(elem, title, content) {
+		if (!elem) return;
 		elem.button('reset');
         elem.popover({
         	  trigger : 'manual'

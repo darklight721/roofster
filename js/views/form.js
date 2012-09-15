@@ -28,7 +28,7 @@ define(function(require){
 		console.log('save success');
 
 		var files = formView.$('#pictures')[0].files;
-		if (files.length > 0 || (formView.model.has('pictures') && formView.$('#picture_names').val() === ''))
+		if (files.length > 0 || (!_.isEmpty(formView.model.get('pictures')) && formView.$('#picture_names').val() === ''))
 		{
 			console.log('uploading pictures');
 			FormHelper.uploadPictures(
@@ -88,16 +88,36 @@ define(function(require){
         );
 	}
 
+	function modelChanged() {
+		console.log('roof attr changed');
+		if (formView.model.hasChanged('address'))
+		{
+			if (formView.model.get('address'))
+			{
+				var elem = formView.$('#address');
+				elem.val(formView.model.get('address'));
+				FormHelper.removeError(elem);
+			}
+		}
+		else if (formView.model.hasChanged('latitude'))
+		{
+			if (formView.model.get('latitude'))
+			{
+				FormHelper.removeError(formView.$('#latitude'));
+			}
+		}
+	}
+
 	return Backbone.View.extend({
 
 		initialize : function() {
-			this.template = Templates.renderFormView();
 			formView = this;
+			this.template = Templates.renderFormView();
 		},
 		
 		setModel : function(model) {
 			this.model = model;
-			this.model.on('change:address change:latitude change:longitude', this.modelChanged, this);
+			this.model.on('change:address change:latitude change:longitude', modelChanged);
 		},
 
 		render : function() {
@@ -238,20 +258,6 @@ define(function(require){
 						}
 					});
 				}
-			}
-		},
-		
-		modelChanged : function() {
-			console.log('roof attr changed');
-			if (this.model.hasChanged('address'))
-			{
-				var elem = this.$('#address');
-				elem.val(this.model.get('address'));
-				FormHelper.removeError(elem);
-			}
-			else if (this.model.hasChanged('latitude'))
-			{
-				FormHelper.removeError(this.$('#latitude'));
 			}
 		}
 
