@@ -175,10 +175,9 @@ define(function(require){
 			if (result)
 			{
 				// display the names
-				var names = '';
-				$.each(evt.target.files, function(){
-					names += this.name + ' ';
-				});
+				var names = $.map(evt.target.files, function(file){
+					return file.name;
+				}).join(', ');
 				this.$('#picture_names').val(names);
 			}
 			else

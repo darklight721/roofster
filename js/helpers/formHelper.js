@@ -66,11 +66,9 @@ define(['$', 'Bootstrap', 'exports'], function($, Bootstrap, exports) {
 	};
 
 	exports.extractPictureNames = function(pictures, id) {
-		var names = '';
-		$.each(pictures, function(){
-			names += this.replace('pics/' + id + '/', '') + ' ';
-		});
-		return names;
+		return $.map(pictures, function(picture){
+			return picture.replace('pics/' + id + '/', '');
+		}).join(', ');
 	};
 
 });
